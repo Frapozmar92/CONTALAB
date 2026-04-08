@@ -12,22 +12,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install PostgreSQL client
-        run: sudo apt-get install -y postgresql-client
-
       - name: Create backup
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
           mkdir -p backups
           FECHA=$(date +%Y-%m-%d)
-          pg_dump "$DATABASE_URL" \
-            --no-owner --no-acl \
-            -f "backups/backup-$FECHA.sql"
+          CARPETA="backups/$FECHA"
+          mkdir -p "$CARPETA"
+
+          for TABLA in alumnos progreso respuestas ejercicios_profesor config; do
+            echo "Exportando $TABLA..."
+            curl -s \
+              -H "apikey: $SUPABASE_KEY" \
+              -H "Authorization: Bearer $SUPABASE_KEY" \
+              -H "Accept: application/json" \
+              "$SUPABASE_URL/rest/v1/$TABLA?select=*" \
+              -o "$CARPETA/$TABLA.json"
+            echo "✓ $TABLA"
+          done
+
+          echo "Backup completado en $CARPETA"
 
       - name: Eliminar backups con más de 30 días
         run: |
-          find backups/ -name "*.sql" -mtime +30 -delete
+          find backups/ -maxdepth 1 -type d -mtime +30 -exec rm -rf {} +
 
       - name: Commit y push
         run: |
