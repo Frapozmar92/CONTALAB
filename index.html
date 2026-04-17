@@ -6832,7 +6832,10 @@ function ejemploProfGuardar(num) {
     t = { num:num, titulo:hc.titulo, descripcion:hc.descripcion||'', icono:hc.icono||'📘', color:hc.color||'#3a5bbf', activo:true, teoria:hc.teoria||[], ejemplos:[] };
     APP_DATA.temasConfig.push(t);
   }
+  // Sincronizar también teoría por si TEMAS_DATA fue actualizado en memoria
+  if (TEMAS_DATA[num].teoria) t.teoria = TEMAS_DATA[num].teoria;
   t.ejemplos = nuevos;
+  console.log('[ejemploProfGuardar] tema', num, 'con', nuevos.length, 'ejemplos');
   if (_ejinline_editIdx !== null) _ejLimpiarFilaState(_ejinline_editIdx);
   _ejinline_num=null; _ejinline_editIdx=null; _ejinline_secs=[];
   switchTemaTab(num, 'ejemplos');
