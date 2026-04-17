@@ -2029,6 +2029,7 @@ select:focus {
   font-size: 0.79rem;
   color: var(--text-muted);
   line-height: 1.6;
+  white-space: pre-wrap;
 }
 .diario-toggle-btn {
   display: inline-flex;
@@ -4405,6 +4406,14 @@ function showPanel(name) {
   if (name === 'balance') renderBalance();
   if (name === 'pyg') renderPyG();
   updateStats();
+}
+
+// Fusiona los ejercicios frescos de BD con los que el profesor ya tiene en memoria
+// pero que aún no han llegado a BD (race condition entre INSERT y SELECT).
+function _mergeEjerciciosLocales(fromDB) {
+  var enBD  = new Set((fromDB || []).map(function(e){ return String(e.id); }));
+  var soloLocal = (APP_DATA.ejerciciosProfesor || []).filter(function(e){ return !enBD.has(String(e.id)); });
+  return (fromDB || []).concat(soloLocal);
 }
 
 // Re-renderiza el panel activo de forma segura tras un refresco de datos en segundo plano.
@@ -13782,6 +13791,23 @@ var _modoOffline = false;
 var _sbAuthToken    = null;  // JWT de Supabase Auth (sesión activa)
 var _sbRefreshToken = null;  // Refresh token para renovar el JWT
 
+// Refresco preventivo del JWT cada 45 min (caduca a la hora)
+var _sbTokenRefreshTimer = null;
+function _sbStartTokenRefresh() {
+  clearInterval(_sbTokenRefreshTimer);
+  _sbTokenRefreshTimer = setInterval(async function() {
+    if (!_sbRefreshToken) return;
+    var ok = await sbAuthRefresh();
+    if (ok) {
+      try {
+        var s = lsGet('sesion');
+        if (s) { s.authToken = _sbAuthToken; s.refreshToken = _sbRefreshToken; lsSet('sesion', s); }
+      } catch(e) {}
+    }
+  }, 45 * 60 * 1000);
+}
+function _sbStopTokenRefresh() { clearInterval(_sbTokenRefreshTimer); _sbTokenRefreshTimer = null; }
+
 // ── LocalStorage cache helpers ───────────────────────────────
 var LS_PREFIX = 'contaLab_';
 function lsGet(key)      { try { var v = localStorage.getItem(LS_PREFIX + key); return v ? JSON.parse(v) : null; } catch(e) { return null; } }
@@ -13796,11 +13822,18 @@ function sbHeaders() {
 
 async function sbSelect(table, params) {
   var qs = params ? '?' + params : '';
-  try {
+  var doReq = function() {
     var ctrl = new AbortController();
-    var tid = setTimeout(function(){ ctrl.abort(); }, 3000);
-    var r = await fetch(SUPABASE_URL + '/rest/v1/' + table + qs, { headers: Object.assign({'Prefer':'return=representation'}, sbHeaders()), signal: ctrl.signal });
-    clearTimeout(tid);
+    setTimeout(function(){ ctrl.abort(); }, 5000);
+    return fetch(SUPABASE_URL + '/rest/v1/' + table + qs, { headers: Object.assign({'Prefer':'return=representation'}, sbHeaders()), signal: ctrl.signal });
+  };
+  try {
+    var r = await doReq();
+    // Token expirado → refrescar y reintentar una vez
+    if (r.status === 401 && _sbRefreshToken) {
+      var refreshed = await sbAuthRefresh();
+      if (refreshed) r = await doReq();
+    }
     if (!r.ok) throw new Error('sbSelect ' + table + ' ' + r.status);
     var data = await r.json();
     lsSet('cache_' + table, data);
@@ -13829,12 +13862,20 @@ async function sbInsert(table, body) {
 
 async function sbUpsert(table, body, onConflict) {
   var qs = onConflict ? '?on_conflict=' + onConflict : '';
-  try {
-    var r = await fetch(SUPABASE_URL + '/rest/v1/' + table + qs, {
+  var doReq = function() {
+    return fetch(SUPABASE_URL + '/rest/v1/' + table + qs, {
       method: 'POST',
       headers: Object.assign({'Prefer':'return=representation,resolution=merge-duplicates'}, sbHeaders()),
       body: JSON.stringify(body)
     });
+  };
+  try {
+    var r = await doReq();
+    // Token expirado → refrescar y reintentar una vez
+    if (r.status === 401 && _sbRefreshToken) {
+      var refreshed = await sbAuthRefresh();
+      if (refreshed) r = await doReq();
+    }
     if (!r.ok) { var t = await r.text(); throw new Error('sbUpsert ' + table + ' ' + r.status + ' ' + t); }
     var result = await r.json();
     var cached = lsGet('cache_' + table) || [];
@@ -13857,12 +13898,20 @@ async function sbUpsert(table, body, onConflict) {
 }
 
 async function sbUpdate(table, filterParam, body) {
-  try {
-    var r = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?' + filterParam, {
+  var doReq = function() {
+    return fetch(SUPABASE_URL + '/rest/v1/' + table + '?' + filterParam, {
       method: 'PATCH',
       headers: Object.assign({'Prefer':'return=representation'}, sbHeaders()),
       body: JSON.stringify(body)
     });
+  };
+  try {
+    var r = await doReq();
+    // Token expirado → refrescar y reintentar una vez
+    if (r.status === 401 && _sbRefreshToken) {
+      var refreshed = await sbAuthRefresh();
+      if (refreshed) r = await doReq();
+    }
     if (!r.ok) { var t = await r.text(); throw new Error('sbUpdate ' + table + ' ' + r.status + ' ' + t); }
     var result = await r.json();
     // Actualizar caché local con los campos modificados
@@ -13949,6 +13998,7 @@ async function sbAuthSignOut() {
   } catch(e) { console.warn('[auth] signOut error:', e.message); }
   _sbAuthToken    = null;
   _sbRefreshToken = null;
+  _sbStopTokenRefresh();
 }
 
 // Helper: autenticar alumno con Supabase Auth via Edge Function
@@ -13966,6 +14016,7 @@ async function _loginAlumnoConAuth(alumno, pwd) {
     }
     _sbAuthToken    = fnData.access_token;
     _sbRefreshToken = fnData.refresh_token || null;
+    _sbStartTokenRefresh(); // Renovar JWT automáticamente cada 45 min
   } catch(e) {
     console.warn('[auth] Login con auth falló (sin impacto en experiencia):', e.message);
   }
@@ -14316,6 +14367,7 @@ async function loginProfesor() {
     }
     _sbAuthToken    = fnData.access_token;
     _sbRefreshToken = fnData.refresh_token || null;
+    _sbStartTokenRefresh(); // Renovar JWT automáticamente cada 45 min
   } catch(e) {
     hideLoading();
     showLoginError('l-error-prof', 'Error de conexión: ' + e.message);
@@ -14495,8 +14547,16 @@ async function guardarEjercicioEnDB(ej) {
     // Guardar _orden dentro de datos para que persista sin cambiar el esquema de Supabase
     var idx = (APP_DATA.ejerciciosProfesor || []).findIndex(function(e){ return String(e.id) === String(ej.id); });
     var ejConOrden = Object.assign({}, ej, { _orden: idx >= 0 ? idx : 9999 });
-    await sbUpsert('ejercicios_profesor', { id: ej.id, datos: ejConOrden }, 'id');
-  } catch(e) { console.warn('Error guardando ejercicio:', e); }
+    var res = await sbUpsert('ejercicios_profesor', { id: String(ej.id), datos: ejConOrden }, 'id');
+    // Verificar que la respuesta contiene datos (guardado real en BD)
+    if (!res || (Array.isArray(res) && res.length === 0)) {
+      console.warn('[guardarEjercicio] Respuesta vacía — posible fallo silencioso');
+      flash('⚠ No se pudo conectar con la BD. El ejercicio está en memoria pero puede perderse al recargar.', 'var(--red)');
+    }
+  } catch(e) {
+    console.warn('Error guardando ejercicio:', e);
+    flash('⚠ Error al guardar el ejercicio en la base de datos: ' + e.message, 'var(--red)');
+  }
 }
 
 async function eliminarEjercicioDeBD(id) {
@@ -15264,6 +15324,7 @@ window.addEventListener('DOMContentLoaded', function() {
       if (refreshOk) {
         var s = lsGet('sesion');
         if (s) { s.authToken = _sbAuthToken; s.refreshToken = _sbRefreshToken; lsSet('sesion', s); }
+        _sbStartTokenRefresh(); // Mantener JWT vivo durante toda la sesión
       } else {
         _sbAuthToken = null; _sbRefreshToken = null;
       }
@@ -15304,9 +15365,8 @@ window.addEventListener('DOMContentLoaded', function() {
         (async function() {
           try {
             var results = await Promise.all([sbSelect('ejercicios_profesor',''),sbSelect('alumnos',''),sbSelect('respuestas',''),sbSelect('progreso',''),sbSelect('config','')]);
-            APP_DATA.ejerciciosProfesor = (results[0]||[])
-              .slice().sort(function(a,b){ var oa=(a.datos&&a.datos._orden!=null)?a.datos._orden:9999; var ob=(b.datos&&b.datos._orden!=null)?b.datos._orden:9999; return oa-ob; })
-              .map(function(e){ return e.datos; });
+            var _ejFromDB = (results[0]||[]).slice().sort(function(a,b){ var oa=(a.datos&&a.datos._orden!=null)?a.datos._orden:9999; var ob=(b.datos&&b.datos._orden!=null)?b.datos._orden:9999; return oa-ob; }).map(function(e){ return e.datos; });
+            APP_DATA.ejerciciosProfesor = _mergeEjerciciosLocales(_ejFromDB); // merge: conserva ejercicios creados antes de que el INSERT llegue a BD
             APP_DATA.alumnos = (results[1]||[]).map(function(a){ var prog=(results[3]||[]).find(function(p){ return p.alumno_id===a.id; }); return { id:a.id,nombre:a.nombre,fechaReg:a.fecha_reg,progreso:prog?(prog.datos||crearProgresoVacio()):crearProgresoVacio(),ultimaActividad:prog?(prog.updated_at||null):null }; });
             APP_DATA.respuestasAlumno = (results[2]||[]).map(function(r){ return Object.assign({},r.datos,{alumnoId:r.alumno_id,ejId:r.ejercicio_id,evaluacion:r.evaluacion,comentario:r.comentario,fecha:r.fecha,_dbId:r.id}); });
             state.ejerciciosProfesor = APP_DATA.ejerciciosProfesor;
