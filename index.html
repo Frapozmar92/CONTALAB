@@ -18480,11 +18480,40 @@ async function cargarTemasConfig() {
 
 async function guardarTemasConfig() {
   var temas = APP_DATA.temasConfig || getTemasConfig();
+  var payload = JSON.stringify(temas);
+  // sbUpsert swallow-eats los errores en modo offline; usamos fetch directo
+  // para poder distinguir éxito real de fallo silencioso.
   try {
-    await sbUpsert('config', { clave: 'temas_config', valor: JSON.stringify(temas) }, 'clave');
-    mostrarToastTemas('✓ Temas guardados correctamente', 'ok');
+    var r = await fetch(SUPABASE_URL + '/rest/v1/config?on_conflict=clave', {
+      method: 'POST',
+      headers: Object.assign({'Prefer':'return=representation,resolution=merge-duplicates'}, sbHeaders()),
+      body: JSON.stringify({ clave: 'temas_config', valor: payload })
+    });
+    if (r.status === 401 && typeof _sbRefreshToken !== 'undefined' && _sbRefreshToken) {
+      var refreshed = await sbAuthRefresh();
+      if (refreshed) {
+        r = await fetch(SUPABASE_URL + '/rest/v1/config?on_conflict=clave', {
+          method: 'POST',
+          headers: Object.assign({'Prefer':'return=representation,resolution=merge-duplicates'}, sbHeaders()),
+          body: JSON.stringify({ clave: 'temas_config', valor: payload })
+        });
+      }
+    }
+    if (!r.ok) {
+      var t = await r.text();
+      console.error('[guardarTemasConfig] HTTP', r.status, t);
+      mostrarToastTemas('⚠ NO guardado en servidor (HTTP ' + r.status + '). Revisa la conexión e inténtalo otra vez.', 'warn');
+    } else {
+      var data = await r.json();
+      if (!data || (Array.isArray(data) && data.length === 0)) {
+        mostrarToastTemas('⚠ Servidor respondió vacío — guardado dudoso. Recarga la página y comprueba.', 'warn');
+      } else {
+        mostrarToastTemas('✓ Temas guardados en servidor', 'ok');
+      }
+    }
   } catch(e) {
-    mostrarToastTemas('⚠ Guardado solo localmente: ' + e.message, 'warn');
+    console.error('[guardarTemasConfig] exception:', e);
+    mostrarToastTemas('⚠ Error de red al guardar: ' + e.message, 'warn');
   }
   aplicarTemasConfig();
   aplicarModuloConfig();
