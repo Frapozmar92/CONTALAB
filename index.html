@@ -19603,8 +19603,8 @@ async function chatIASend() {
     }
     var modoAlumno = 'guia'; // por defecto tutor guía (no da soluciones directas)
     try {
-      var cfg = lsGet('cfg_chatia_modo_alumno');
-      if (cfg === 'libre') modoAlumno = 'libre';
+      // El modo lo controla el profesor desde su panel → está en APP_DATA._chatiaModoAlumno
+      if (APP_DATA && APP_DATA._chatiaModoAlumno === 'libre') modoAlumno = 'libre';
     } catch(e) {}
 
     var body = {
