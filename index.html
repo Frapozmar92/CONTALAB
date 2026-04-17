@@ -18518,6 +18518,126 @@ async function cargarTemasConfig() {
   } catch(e) {
     console.warn('[offline] cargarTemasConfig:', e.message);
   }
+  // Cargar también el modo del chat IA para alumnos (global, controlado por profesor)
+  await cargarChatIAModoAlumno();
+}
+
+// ── CHAT IA: modo para alumnos (guia | libre) ─────────────────
+async function cargarChatIAModoAlumno() {
+  try {
+    var rows = await sbSelect('config', 'clave=eq.chatia_modo_alumno');
+    if (rows.length && rows[0].valor) {
+      var v = String(rows[0].valor).trim();
+      APP_DATA._chatiaModoAlumno = (v === 'libre') ? 'libre' : 'guia';
+    } else {
+      APP_DATA._chatiaModoAlumno = 'guia';
+    }
+  } catch(e) {
+    console.warn('[offline] cargarChatIAModoAlumno:', e.message);
+    APP_DATA._chatiaModoAlumno = APP_DATA._chatiaModoAlumno || 'guia';
+  }
+}
+
+async function guardarChatIAModoAlumno(modo) {
+  modo = (modo === 'libre') ? 'libre' : 'guia';
+  var doReq = function() {
+    return fetch(SUPABASE_URL + '/rest/v1/config?on_conflict=clave', {
+      method: 'POST',
+      headers: Object.assign({'Prefer':'return=representation,resolution=merge-duplicates'}, sbHeaders()),
+      body: JSON.stringify({ clave: 'chatia_modo_alumno', valor: modo })
+    });
+  };
+  try {
+    var r = await doReq();
+    if (r.status === 401 && typeof _sbRefreshToken !== 'undefined' && _sbRefreshToken) {
+      var refreshed = await sbAuthRefresh();
+      if (refreshed) r = await doReq();
+    }
+    if (!r.ok) {
+      var t = await r.text();
+      console.error('[guardarChatIAModoAlumno] HTTP', r.status, t);
+      flash('⚠ NO guardado (HTTP ' + r.status + ')', 'var(--red)');
+      return false;
+    }
+    var data = await r.json();
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+      flash('⚠ Servidor respondió vacío', 'var(--red)');
+      return false;
+    }
+    APP_DATA._chatiaModoAlumno = modo;
+    flash('✓ Modo del Tutor IA actualizado', 'var(--green)');
+    return true;
+  } catch(e) {
+    console.error('[guardarChatIAModoAlumno] excepción:', e);
+    flash('⚠ Error de red: ' + e.message, 'var(--red)');
+    return false;
+  }
+}
+
+function renderProfIA() {
+  var cont = document.getElementById('prof-ia-content');
+  if (!cont) return;
+  var modo = (APP_DATA._chatiaModoAlumno === 'libre') ? 'libre' : 'guia';
+  var isLibre = modo === 'libre';
+  cont.innerHTML = ''
+    + '<div class="prof-form" style="max-width:720px;">'
+    +   '<div class="prof-form-title">🤖 Configuración del Tutor IA</div>'
+    +   '<p style="color:var(--text-muted);font-size:0.9rem;line-height:1.6;margin:4px 0 16px;">'
+    +     'Controla cómo responde el tutor IA a los <strong>alumnos</strong>. Este ajuste es global: se aplica a toda la clase. '
+    +     'Tu propio chat (profesor) no se ve afectado por esta opción.'
+    +   '</p>'
+    +   '<div class="prof-field" style="display:flex;flex-direction:column;gap:12px;">'
+    +     '<label style="display:flex;gap:10px;align-items:flex-start;padding:12px;border:2px solid ' + (!isLibre ? 'var(--accent4)' : 'var(--border)') + ';border-radius:8px;cursor:pointer;background:' + (!isLibre ? 'rgba(58,91,191,0.05)' : 'transparent') + ';">'
+    +       '<input type="radio" name="pfia-modo" value="guia" ' + (!isLibre ? 'checked' : '') + ' onchange="_profIAPreview(this.value)" style="margin-top:3px;">'
+    +       '<div style="flex:1;">'
+    +         '<div style="font-weight:600;font-size:0.95rem;">🎓 Modo Guía <span style="color:var(--text-muted);font-weight:400;font-size:0.82rem;">(recomendado)</span></div>'
+    +         '<div style="color:var(--text-muted);font-size:0.85rem;margin-top:4px;line-height:1.5;">'
+    +           'El tutor <strong>no da las soluciones</strong> de los ejercicios. Hace preguntas socráticas, explica conceptos del PGC, orienta al alumno para que piense. Ideal durante el aprendizaje y las evaluaciones.'
+    +         '</div>'
+    +       '</div>'
+    +     '</label>'
+    +     '<label style="display:flex;gap:10px;align-items:flex-start;padding:12px;border:2px solid ' + (isLibre ? 'var(--accent4)' : 'var(--border)') + ';border-radius:8px;cursor:pointer;background:' + (isLibre ? 'rgba(58,91,191,0.05)' : 'transparent') + ';">'
+    +       '<input type="radio" name="pfia-modo" value="libre" ' + (isLibre ? 'checked' : '') + ' onchange="_profIAPreview(this.value)" style="margin-top:3px;">'
+    +       '<div style="flex:1;">'
+    +         '<div style="font-weight:600;font-size:0.95rem;">🔓 Modo Libre</div>'
+    +         '<div style="color:var(--text-muted);font-size:0.85rem;margin-top:4px;line-height:1.5;">'
+    +           'El tutor <strong>responde y resuelve</strong> con normalidad. Útil para repasos, sesiones de dudas abiertas o cuando quieras que la IA ayude a resolver casos.'
+    +         '</div>'
+    +       '</div>'
+    +     '</label>'
+    +   '</div>'
+    +   '<div style="margin-top:18px;display:flex;gap:10px;align-items:center;">'
+    +     '<button class="btn btn-primary" onclick="_profIAGuardar()">💾 Guardar modo</button>'
+    +     '<span id="pfia-estado" style="color:var(--text-muted);font-size:0.85rem;">Modo activo: <strong>' + (isLibre ? 'Libre' : 'Guía') + '</strong></span>'
+    +   '</div>'
+    + '</div>';
+}
+
+function _profIAPreview(modo) {
+  // Rerenderiza para reflejar visualmente la selección sin guardar aún
+  APP_DATA._chatiaModoAlumnoPreview = modo;
+  var est = document.getElementById('pfia-estado');
+  if (est) est.innerHTML = 'Pendiente de guardar: <strong>' + (modo === 'libre' ? 'Libre' : 'Guía') + '</strong>';
+  // Actualiza bordes/fondo de las tarjetas
+  var radios = document.getElementsByName('pfia-modo');
+  for (var i = 0; i < radios.length; i++) {
+    var lbl = radios[i].parentElement;
+    if (!lbl) continue;
+    if (radios[i].value === modo) {
+      lbl.style.border = '2px solid var(--accent4)';
+      lbl.style.background = 'rgba(58,91,191,0.05)';
+    } else {
+      lbl.style.border = '2px solid var(--border)';
+      lbl.style.background = 'transparent';
+    }
+  }
+}
+
+async function _profIAGuardar() {
+  var sel = document.querySelector('input[name="pfia-modo"]:checked');
+  if (!sel) return;
+  var ok = await guardarChatIAModoAlumno(sel.value);
+  if (ok) renderProfIA();
 }
 
 async function guardarTemasConfig() {
