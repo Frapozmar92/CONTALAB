@@ -19267,6 +19267,206 @@ function teoriaProfToggleVista(num, i, vista) {
   <button onmousedown="event.preventDefault();_wFloatEnlace()" title="Enlace">🔗</button>
   <button onmousedown="event.preventDefault();document.execCommand('removeFormat')" title="Quitar formato">✕</button>
 </div>
+
+<!-- ── Chat IA (tutor contable) ────────────────────────────── -->
+<button id="chatia-fab" onclick="chatIAToggle()" title="Tutor IA de contabilidad">🤖</button>
+<div id="chatia-panel" role="dialog" aria-label="Tutor IA">
+  <div id="chatia-header">
+    <div>
+      <div id="chatia-header-title">🤖 Tutor IA</div>
+      <div id="chatia-header-sub">Llama 3.3 · PGC español</div>
+    </div>
+    <button id="chatia-close" onclick="chatIAToggle()" aria-label="Cerrar">✕</button>
+  </div>
+  <div id="chatia-msgs"></div>
+  <div id="chatia-input-wrap">
+    <textarea id="chatia-input" rows="1" placeholder="Pregúntame sobre contabilidad…" onkeydown="chatIAKeydown(event)"></textarea>
+    <button id="chatia-send" onclick="chatIASend()">Enviar</button>
+  </div>
+</div>
+<script>
+// ── Chat IA ────────────────────────────────────────────────
+var _chatIAHistorial = []; // [{role:'user'|'assistant', content:''}]
+var _chatIAEnviando  = false;
+
+function chatIAMostrarBoton() {
+  var fab = document.getElementById('chatia-fab');
+  if (!fab) return;
+  if (typeof currentUser !== 'undefined' && currentUser && (currentUser.rol === 'profesor' || currentUser.rol === 'alumno')) {
+    fab.classList.add('visible');
+  } else {
+    fab.classList.remove('visible');
+    var p = document.getElementById('chatia-panel');
+    if (p) p.classList.remove('open');
+  }
+}
+
+function chatIAToggle() {
+  var p = document.getElementById('chatia-panel');
+  if (!p) return;
+  p.classList.toggle('open');
+  if (p.classList.contains('open')) {
+    if (!_chatIAHistorial.length) _chatIASaludo();
+    setTimeout(function(){
+      var i = document.getElementById('chatia-input');
+      if (i) i.focus();
+    }, 50);
+  }
+}
+
+function _chatIASaludo() {
+  var rol = (currentUser && currentUser.rol) || 'alumno';
+  var nombre = (currentUser && currentUser.nombre) || '';
+  var saludo = rol === 'profesor'
+    ? 'Hola ' + nombre + '. Soy tu asistente docente. Puedo ayudarte a crear ejercicios, generar variantes, redactar explicaciones o resolver dudas del PGC. ¿Qué necesitas?'
+    : 'Hola ' + nombre + '. Soy tu tutor de contabilidad. Pregúntame lo que no entiendas del tema y te guiaré paso a paso. Recuerda: aprenderás más si intentas razonar primero y me pides pistas.';
+  _chatIAPinta('ia', saludo);
+}
+
+function chatIAKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    chatIASend();
+  }
+}
+
+function _chatIAPinta(clase, texto) {
+  var cont = document.getElementById('chatia-msgs');
+  if (!cont) return null;
+  var d = document.createElement('div');
+  d.className = 'chatia-msg ' + clase;
+  if (clase === 'ia') d.innerHTML = _chatIAMarkdown(texto);
+  else d.textContent = texto;
+  cont.appendChild(d);
+  cont.scrollTop = cont.scrollHeight;
+  return d;
+}
+
+// Markdown mínimo → HTML seguro (escape + negrita + tablas + code + saltos de línea)
+function _chatIAEscape(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function _chatIAMarkdown(txt) {
+  if (!txt) return '';
+  var esc = _chatIAEscape(txt);
+  // Tablas Markdown: detecta bloques con líneas | col | col |
+  var lines = esc.split('\n');
+  var out = [], i = 0;
+  while (i < lines.length) {
+    var ln = lines[i];
+    if (/^\s*\|.*\|\s*$/.test(ln) && i+1 < lines.length && /^\s*\|[\s\-\|:]+\|\s*$/.test(lines[i+1])) {
+      // Inicio de tabla
+      var header = ln.trim().replace(/^\||\|$/g,'').split('|').map(function(c){return c.trim();});
+      i += 2; // saltar separador
+      var rows = [];
+      while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) {
+        rows.push(lines[i].trim().replace(/^\||\|$/g,'').split('|').map(function(c){return c.trim();}));
+        i++;
+      }
+      var html = '<table><thead><tr>' + header.map(function(c){return '<th>'+c+'</th>';}).join('') + '</tr></thead><tbody>';
+      rows.forEach(function(r){ html += '<tr>' + r.map(function(c){return '<td>'+c+'</td>';}).join('') + '</tr>'; });
+      html += '</tbody></table>';
+      out.push(html);
+    } else {
+      out.push(ln);
+      i++;
+    }
+  }
+  var joined = out.join('\n');
+  // **negrita**, `code`, saltos
+  joined = joined
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\n/g, '<br>');
+  // Los <br> dentro de las tablas los quitamos (quedaron entre filas)
+  joined = joined.replace(/<\/table><br>/g, '</table>').replace(/<br><table>/g, '<table>').replace(/<br><\/tbody>/g, '</tbody>');
+  return joined;
+}
+
+async function chatIASend() {
+  if (_chatIAEnviando) return;
+  var inp = document.getElementById('chatia-input');
+  var txt = (inp.value || '').trim();
+  if (!txt) return;
+  if (!currentUser) { _chatIAPinta('error', 'Debes iniciar sesión para usar el tutor.'); return; }
+
+  inp.value = '';
+  inp.style.height = '';
+  _chatIAPinta('user', txt);
+  _chatIAHistorial.push({ role:'user', content: txt });
+
+  _chatIAEnviando = true;
+  var sendBtn = document.getElementById('chatia-send');
+  if (sendBtn) sendBtn.disabled = true;
+  var loading = _chatIAPinta('ia loading', '✍️ Pensando…');
+
+  try {
+    var rol = currentUser.rol === 'profesor' ? 'profesor' : 'alumno';
+    // Contexto del tema actual (solo alumnos)
+    var temaNum = null, temaTitulo = null;
+    if (rol === 'alumno' && typeof state !== 'undefined' && state && state.temaActual) {
+      temaNum = parseInt(String(state.temaActual).replace(/[^0-9]/g,''), 10) || null;
+      if (temaNum && typeof TEMAS_DATA !== 'undefined' && TEMAS_DATA[temaNum]) {
+        temaTitulo = TEMAS_DATA[temaNum].titulo || null;
+      }
+    }
+    var modoAlumno = 'guia'; // por defecto tutor guía (no da soluciones directas)
+    try {
+      var cfg = lsGet('cfg_chatia_modo_alumno');
+      if (cfg === 'libre') modoAlumno = 'libre';
+    } catch(e) {}
+
+    var body = {
+      rol: rol,
+      temaNum: temaNum,
+      temaTitulo: temaTitulo,
+      modoAlumno: modoAlumno,
+      messages: _chatIAHistorial.slice(-12) // últimas 12 para no explotar tokens
+    };
+
+    var headers = {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + (typeof _sbAuthToken !== 'undefined' && _sbAuthToken ? _sbAuthToken : SUPABASE_KEY)
+    };
+    var r = await fetch(SUPABASE_URL + '/functions/v1/chat-ia', {
+      method: 'POST', headers: headers, body: JSON.stringify(body)
+    });
+
+    if (loading && loading.parentNode) loading.parentNode.removeChild(loading);
+
+    if (!r.ok) {
+      var errTxt = await r.text();
+      _chatIAPinta('ia error', '⚠ Error ' + r.status + ': ' + errTxt.slice(0,300));
+    } else {
+      var data = await r.json();
+      var respuesta = data.respuesta || '(respuesta vacía)';
+      _chatIAPinta('ia', respuesta);
+      _chatIAHistorial.push({ role:'assistant', content: respuesta });
+    }
+  } catch(e) {
+    if (loading && loading.parentNode) loading.parentNode.removeChild(loading);
+    _chatIAPinta('ia error', '⚠ No se pudo conectar: ' + e.message);
+  } finally {
+    _chatIAEnviando = false;
+    if (sendBtn) sendBtn.disabled = false;
+    var i2 = document.getElementById('chatia-input');
+    if (i2) i2.focus();
+  }
+}
+
+// Auto-resize del textarea
+document.addEventListener('DOMContentLoaded', function(){
+  var ta = document.getElementById('chatia-input');
+  if (ta) ta.addEventListener('input', function(){
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+  });
+  // Re-chequear cada cierto tiempo por si cambia currentUser
+  setInterval(chatIAMostrarBoton, 1500);
+  chatIAMostrarBoton();
+});
+</script>
 </body>
 </html>
 </body>
