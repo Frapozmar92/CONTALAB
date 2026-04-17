@@ -14617,19 +14617,51 @@ async function guardarRespuestaEnDB(resp) {
 async function guardarEjercicioEnDB(ej) {
   if (!currentUser || currentUser.rol !== 'profesor') { flash('⚠ Acción no autorizada', 'var(--red)'); return; }
 
+  // Usamos fetch directo para distinguir éxito real de fallo silencioso
+  // (sbUpsert se traga los errores y siempre devuelve [body])
+  var idx = (APP_DATA.ejerciciosProfesor || []).findIndex(function(e){ return String(e.id) === String(ej.id); });
+  var ejConOrden = Object.assign({}, ej, { _orden: idx >= 0 ? idx : 9999 });
+  var payload = JSON.stringify({ id: String(ej.id), datos: ejConOrden });
+  console.log('[guardarEjercicio] id=' + ej.id + ' tema=' + ej.tema + ' tipo=' + ej.tipo);
+
+  var doReq = function() {
+    return fetch(SUPABASE_URL + '/rest/v1/ejercicios_profesor?on_conflict=id', {
+      method: 'POST',
+      headers: Object.assign({'Prefer':'return=representation,resolution=merge-duplicates'}, sbHeaders()),
+      body: payload
+    });
+  };
+
   try {
-    // Guardar _orden dentro de datos para que persista sin cambiar el esquema de Supabase
-    var idx = (APP_DATA.ejerciciosProfesor || []).findIndex(function(e){ return String(e.id) === String(ej.id); });
-    var ejConOrden = Object.assign({}, ej, { _orden: idx >= 0 ? idx : 9999 });
-    var res = await sbUpsert('ejercicios_profesor', { id: String(ej.id), datos: ejConOrden }, 'id');
-    // Verificar que la respuesta contiene datos (guardado real en BD)
-    if (!res || (Array.isArray(res) && res.length === 0)) {
-      console.warn('[guardarEjercicio] Respuesta vacía — posible fallo silencioso');
-      flash('⚠ No se pudo conectar con la BD. El ejercicio está en memoria pero puede perderse al recargar.', 'var(--red)');
+    var r = await doReq();
+    if (r.status === 401 && typeof _sbRefreshToken !== 'undefined' && _sbRefreshToken) {
+      var refreshed = await sbAuthRefresh();
+      if (refreshed) r = await doReq();
     }
+    if (!r.ok) {
+      var t = await r.text();
+      console.error('[guardarEjercicio] HTTP', r.status, t);
+      flash('⚠ NO guardado (HTTP ' + r.status + '). Pulsa F12 para ver detalles.', 'var(--red)');
+      return;
+    }
+    var data = await r.json();
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+      console.warn('[guardarEjercicio] Respuesta vacía');
+      flash('⚠ Servidor respondió vacío — guardado dudoso. Recarga y comprueba.', 'var(--red)');
+      return;
+    }
+    // Refrescar caché local para que la lista se pinte con datos frescos del servidor
+    try {
+      var cached = lsGet('cache_ejercicios_profesor') || [];
+      var ci = cached.findIndex(function(row){ return String(row.id) === String(ej.id); });
+      var fresh = { id: String(ej.id), datos: ejConOrden };
+      if (ci !== -1) cached[ci] = fresh; else cached.push(fresh);
+      lsSet('cache_ejercicios_profesor', cached);
+    } catch(e) {}
+    flash('✓ Ejercicio guardado', 'var(--green)');
   } catch(e) {
-    console.warn('Error guardando ejercicio:', e);
-    flash('⚠ Error al guardar el ejercicio en la base de datos: ' + e.message, 'var(--red)');
+    console.error('[guardarEjercicio] excepción:', e);
+    flash('⚠ Error de red: ' + e.message, 'var(--red)');
   }
 }
 
