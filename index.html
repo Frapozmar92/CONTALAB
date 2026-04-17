@@ -11214,7 +11214,7 @@ function cerrarModoProfesor() {
 
 // ---- TABS ----
 function switchProfTab(tab) {
-  ['crear','examen','reto','testq','examen-test','caso','lista','temas','stats','export'].forEach(function(t) {
+  ['crear','examen','reto','testq','examen-test','caso','lista','temas','ia','stats','export'].forEach(function(t) {
     var tabEl  = document.getElementById('ptab-' + t);
     var contEl = document.getElementById('ptab-content-' + t);
     if (tabEl)  tabEl.classList.toggle('active', t === tab);
@@ -11222,6 +11222,7 @@ function switchProfTab(tab) {
   });
   if (tab === 'lista')  renderProfLista();
   if (tab === 'temas')  renderProfTemas();
+  if (tab === 'ia')     renderProfIA();
   if (tab === 'reto' && !_retoEditingId) { resetRetoForm(); }
   if (tab === 'examen-test') {
     actualizarBolsaInfo();
