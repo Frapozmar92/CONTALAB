@@ -16013,6 +16013,90 @@ function addRetoSub(datosIniciales) {
   }
 }
 
+// ── Libro Mayor del reto (para el profesor mientras crea/edita) ──────────
+function toggleRetoMayor() {
+  var sec = document.getElementById('pfr-mayor-section');
+  var arr = document.getElementById('pfr-mayor-arrow');
+  if (!sec) return;
+  if (sec.style.display === 'none') {
+    sec.style.display = 'block';
+    if (arr) arr.textContent = '▲';
+    renderRetoMayor();
+  } else {
+    sec.style.display = 'none';
+    if (arr) arr.textContent = '▼';
+  }
+}
+
+function renderRetoMayor() {
+  var grid = document.getElementById('pfr-mayor-grid');
+  if (!grid) return;
+
+  // Construir mayor a partir de las filas actuales del formulario
+  var tmpMayor = {};
+  _retoSubs.forEach(function(sub) {
+    var sid = sub.sid;
+    (sub.filas || []).forEach(function(f) {
+      var num   = (document.getElementById('reto-fn-'   + sid + '-' + f.fid)||{}).value || '';
+      var nom   = (document.getElementById('reto-fnom-' + sid + '-' + f.fid)||{}).value || '';
+      var debe  = parseFloat((document.getElementById('reto-fd-'   + sid + '-' + f.fid)||{}).value || '') || 0;
+      var haber = parseFloat((document.getElementById('reto-fh-'   + sid + '-' + f.fid)||{}).value || '') || 0;
+      if (!num) return;
+      if (!tmpMayor[num]) tmpMayor[num] = { nombre: nom || num, debe: [], haber: [] };
+      if (!tmpMayor[num].nombre && nom) tmpMayor[num].nombre = nom;
+      var opLabel = 'Op.' + _retoSubs.indexOf(sub) + 1;
+      if (debe  > 0) tmpMayor[num].debe.push({ amount: debe,  desc: opLabel });
+      if (haber > 0) tmpMayor[num].haber.push({ amount: haber, desc: opLabel });
+    });
+  });
+
+  var keys = Object.keys(tmpMayor).sort();
+  if (!keys.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:32px;color:var(--text-muted);font-size:0.85rem;">Introduce cuentas e importes en las operaciones para ver el Libro Mayor.</div>';
+    return;
+  }
+
+  var natMap = {};
+  ALL_CUENTAS.forEach(function(c) { if (c.num && !natMap[c.num]) natMap[c.num] = c.nat; });
+  var natClasses = { ACTIVO:'t-activo', PASIVO:'t-pasivo', 'PATRIMONIO NETO':'t-pn', GASTO:'t-gasto', INGRESO:'t-ingreso' };
+  var html = '';
+  keys.forEach(function(cta) {
+    var data = tmpMayor[cta];
+    var nat  = natMap[cta] || 'ACTIVO';
+    var totalDebe = 0, totalHaber = 0;
+    data.debe.forEach(function(e)  { totalDebe  += e.amount; });
+    data.haber.forEach(function(e) { totalHaber += e.amount; });
+    var saldo      = totalDebe - totalHaber;
+    var saldoClass = saldo > 0.01 ? 'saldo-d' : saldo < -0.01 ? 'saldo-h' : 'saldo-z';
+    var saldoLabel = saldo > 0.01 ? 'Deudor'  : saldo < -0.01 ? 'Acreedor' : 'Saldado';
+    var maxRows    = Math.max(data.debe.length, data.haber.length);
+    var debeRows = '', haberRows = '';
+    for (var i = 0; i < maxRows; i++) {
+      debeRows  += '<div class="mayor-entry">' + (data.debe[i]  ? '<span class="desc">' + data.debe[i].desc  + '</span><span>' + fmt(data.debe[i].amount)  + '</span>' : '') + '</div>';
+      haberRows += '<div class="mayor-entry">' + (data.haber[i] ? '<span class="desc">' + data.haber[i].desc + '</span><span>' + fmt(data.haber[i].amount) + '</span>' : '') + '</div>';
+    }
+    html +=
+      '<div class="cuenta-mayor">' +
+        '<div class="cuenta-mayor-header">' +
+          '<div><div class="cuenta-num">' + cta + '</div><div class="cuenta-nombre">' + data.nombre + '</div></div>' +
+          '<span class="cuenta-tipo-badge ' + (natClasses[nat] || 't-activo') + '">' + nat + '</span>' +
+        '</div>' +
+        '<div class="cuenta-mayor-body">' +
+          '<div class="mayor-cols">' +
+            '<div><div class="mayor-col-title d">DEBE</div>'  + debeRows  + '</div>' +
+            '<div class="mayor-divider"></div>' +
+            '<div><div class="mayor-col-title h">HABER</div>' + haberRows + '</div>' +
+          '</div>' +
+          '<div class="mayor-saldo">' +
+            '<div><div class="saldo-label">Saldo</div><div class="' + saldoClass + '">' + saldoLabel + '</div></div>' +
+            '<div class="' + saldoClass + '" style="font-size:0.9rem">' + fmt(Math.abs(saldo)) + '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  });
+  grid.innerHTML = html;
+}
+
 function eliminarRetoSub(sid) {
   if (_retoSubs.length <= 1) { alert('El reto debe tener al menos una operación.'); return; }
   _retoSubs = _retoSubs.filter(function(s){ return s.sid !== sid; });
