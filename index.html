@@ -4851,6 +4851,72 @@ function renderMayor() {
 }
 
 // ============================================================
+// LIBRO MAYOR DENTRO DE UN TEMA
+// ============================================================
+function renderTemaMayor(num) {
+  var cont = document.getElementById('tema' + num + '-content');
+  if (!cont) return;
+
+  var natMap = {};
+  ALL_CUENTAS.forEach(function(c) { if (c.num && !natMap[c.num]) natMap[c.num] = c.nat; });
+  var natClasses = { ACTIVO:'t-activo', PASIVO:'t-pasivo', 'PATRIMONIO NETO':'t-pn', GASTO:'t-gasto', INGRESO:'t-ingreso' };
+  var keys = Object.keys(state.mayorData || {}).sort();
+
+  var gridHTML = '';
+  if (!keys.length) {
+    gridHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px 20px;color:var(--text-muted);">' +
+      '<div style="font-size:2rem;margin-bottom:12px;">📒</div>' +
+      '<div style="font-size:0.92rem;">Aún no hay asientos registrados.<br>Completa ejercicios o retos para que aparezcan aquí.</div>' +
+      '</div>';
+  } else {
+    for (var k = 0; k < keys.length; k++) {
+      var cta  = keys[k];
+      var data = state.mayorData[cta];
+      var nat  = natMap[cta] || 'ACTIVO';
+      var totalDebe = 0, totalHaber = 0;
+      for (var i = 0; i < data.debe.length;  i++) totalDebe  += data.debe[i].amount;
+      for (var i = 0; i < data.haber.length; i++) totalHaber += data.haber[i].amount;
+      var saldo      = totalDebe - totalHaber;
+      var saldoClass = saldo > 0.01 ? 'saldo-d' : saldo < -0.01 ? 'saldo-h' : 'saldo-z';
+      var saldoLabel = saldo > 0.01 ? 'Deudor'  : saldo < -0.01 ? 'Acreedor' : 'Saldado';
+      var maxRows = Math.max(data.debe.length, data.haber.length);
+      var debeRows = '', haberRows = '';
+      for (var i = 0; i < maxRows; i++) {
+        debeRows  += '<div class="mayor-entry">' + (data.debe[i]  ? '<span class="desc">' + data.debe[i].desc  + '</span><span>' + fmt(data.debe[i].amount)  + '</span>' : '') + '</div>';
+        haberRows += '<div class="mayor-entry">' + (data.haber[i] ? '<span class="desc">' + data.haber[i].desc + '</span><span>' + fmt(data.haber[i].amount) + '</span>' : '') + '</div>';
+      }
+      gridHTML +=
+        '<div class="cuenta-mayor">' +
+          '<div class="cuenta-mayor-header">' +
+            '<div><div class="cuenta-num">' + cta + '</div><div class="cuenta-nombre">' + data.nombre + '</div></div>' +
+            '<span class="cuenta-tipo-badge ' + (natClasses[nat] || 't-activo') + '">' + nat + '</span>' +
+          '</div>' +
+          '<div class="cuenta-mayor-body">' +
+            '<div class="mayor-cols">' +
+              '<div><div class="mayor-col-title d">DEBE</div>'  + debeRows  + '</div>' +
+              '<div class="mayor-divider"></div>' +
+              '<div><div class="mayor-col-title h">HABER</div>' + haberRows + '</div>' +
+            '</div>' +
+            '<div class="mayor-saldo"><div><div class="saldo-label">Saldo</div><div class="' + saldoClass + '">' + saldoLabel + '</div></div><div class="' + saldoClass + '" style="font-size:0.9rem">' + fmt(Math.abs(saldo)) + '</div></div>' +
+          '</div>' +
+        '</div>';
+    }
+  }
+
+  cont.innerHTML =
+    '<div style="padding:4px 0 20px;">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">' +
+        '<div>' +
+          '<div style="font-size:1rem;font-weight:700;color:var(--text);">📒 Libro Mayor</div>' +
+          '<div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">Acumula los asientos correctamente resueltos en ejercicios, ejemplos y retos.</div>' +
+        '</div>' +
+        '<button class="btn btn-outline btn-sm" onclick="renderTemaMayor(' + num + ')">🔄 Actualizar</button>' +
+      '</div>' +
+      '<div class="mayor-grid">' + gridHTML + '</div>' +
+    '</div>';
+}
+
+// ============================================================
 // CASO PRÁCTICO
 // ============================================================
 function renderCaso() {
