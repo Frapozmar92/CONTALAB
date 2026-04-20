@@ -19611,7 +19611,11 @@ var _chatIAEnviando  = false;
 function chatIAMostrarBoton() {
   var fab = document.getElementById('chatia-fab');
   if (!fab) return;
-  if (typeof currentUser !== 'undefined' && currentUser && (currentUser.rol === 'profesor' || currentUser.rol === 'alumno')) {
+  var esProfesor = typeof currentUser !== 'undefined' && currentUser && currentUser.rol === 'profesor';
+  var esAlumno   = typeof currentUser !== 'undefined' && currentUser && currentUser.rol === 'alumno';
+  // Para alumnos: ocultar si el profesor ha desactivado el chat
+  var desactivado = esAlumno && APP_DATA && APP_DATA._chatiaModoAlumno === 'off';
+  if ((esProfesor || esAlumno) && !desactivado) {
     fab.classList.add('visible');
   } else {
     fab.classList.remove('visible');
