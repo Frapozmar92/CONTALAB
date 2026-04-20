@@ -18581,6 +18581,204 @@ async function guardarChatIAModoAlumno(modo) {
   }
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// PESTAÑA SEGUIMIENTO — matriz alumno × actividad
+// ══════════════════════════════════════════════════════════════════════════════
+function renderProfSeguimiento() {
+  var cont = document.getElementById('prof-seguimiento-content');
+  if (!cont) return;
+
+  var alumnos    = (APP_DATA.alumnos || []).slice().sort(function(a,b){ return (a.nombre||'').localeCompare(b.nombre||''); });
+  var ejercicios = (APP_DATA.ejerciciosProfesor || []);
+  var respuestas = (APP_DATA.respuestasAlumno || []);
+
+  if (!alumnos.length)    { cont.innerHTML = '<p style="color:var(--text-muted);padding:16px;">No hay alumnos registrados.</p>'; return; }
+  if (!ejercicios.length) { cont.innerHTML = '<p style="color:var(--text-muted);padding:16px;">No hay actividades creadas todavía.</p>'; return; }
+
+  // Leer filtros actuales
+  var filtroTipo  = (cont._filtroTipo  || 'todos');
+  var filtroTema  = (cont._filtroTema  || 'todos');
+  var filtroAsign = (cont._filtroAsign !== false);  // true = solo asignadas al alumno
+
+  // Temas únicos disponibles
+  var temasSet = {};
+  ejercicios.forEach(function(e) { if (e.tema) temasSet[e.tema] = true; });
+  var temas = Object.keys(temasSet).sort(function(a,b){
+    return parseInt(a.replace(/\D/g,''),10) - parseInt(b.replace(/\D/g,''),10);
+  });
+
+  // Tipos de actividad (label legible)
+  var tipoLabel = { 'null':'Ejercicio', 'undefined':'Ejercicio', '':'Ejercicio',
+    'reto':'Reto', 'examen':'Examen', 'examen_test':'Examen Test',
+    'test_pregunta':'Pregunta Test', 'caso':'Caso Práctico' };
+
+  // Filtrar ejercicios
+  var ejFiltrados = ejercicios.filter(function(e) {
+    var tipo = e.tipo || '';
+    if (filtroTipo !== 'todos' && tipo !== filtroTipo) return false;
+    if (filtroTema !== 'todos' && (e.tema || '') !== filtroTema) return false;
+    return true;
+  });
+
+  // Índice rápido de respuestas: "alumnoId||ejId" → { evaluacion, fecha }
+  var respIdx = {};
+  respuestas.forEach(function(r) {
+    var k = (r.alumnoId || '') + '||' + (r.ejId || '');
+    if (!respIdx[k]) respIdx[k] = { evaluacion: r.evaluacion, fecha: r.fecha };
+  });
+
+  // ── HTML ────────────────────────────────────────────────────────────────────
+  var html = '<div style="max-width:100%;overflow-x:auto;">';
+
+  // Filtros
+  html += '<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px;padding:12px 14px;'
+    + 'background:var(--bg-alt,rgba(0,0,0,0.03));border:1px solid var(--border);border-radius:8px;">';
+
+  // Filtro tipo
+  html += '<div style="display:flex;align-items:center;gap:6px;"><span style="font-size:0.82rem;color:var(--text-muted);">Tipo:</span><select id="seg-filtro-tipo" onchange="renderProfSeguimientoFiltro()" style="font-size:0.83rem;padding:4px 8px;border:1px solid var(--border);border-radius:5px;">';
+  var tiposDisp = { 'todos':'Todos los tipos', '':'Ejercicio', 'reto':'Reto', 'examen':'Examen', 'examen_test':'Examen Test', 'test_pregunta':'Pregunta Test' };
+  Object.keys(tiposDisp).forEach(function(v) {
+    html += '<option value="' + v + '"' + (filtroTipo === v ? ' selected' : '') + '>' + tiposDisp[v] + '</option>';
+  });
+  html += '</select></div>';
+
+  // Filtro tema
+  html += '<div style="display:flex;align-items:center;gap:6px;"><span style="font-size:0.82rem;color:var(--text-muted);">Tema:</span><select id="seg-filtro-tema" onchange="renderProfSeguimientoFiltro()" style="font-size:0.83rem;padding:4px 8px;border:1px solid var(--border);border-radius:5px;">';
+  html += '<option value="todos"' + (filtroTema === 'todos' ? ' selected' : '') + '>Todos los temas</option>';
+  temas.forEach(function(t) {
+    var n = parseInt(t.replace(/\D/g,''),10);
+    html += '<option value="' + t + '"' + (filtroTema === t ? ' selected' : '') + '>Tema ' + n + '</option>';
+  });
+  html += '</select></div>';
+
+  // Resumen
+  html += '<span style="font-size:0.82rem;color:var(--text-muted);margin-left:auto;">'
+    + alumnos.length + ' alumno' + (alumnos.length!==1?'s':'') + ' · '
+    + ejFiltrados.length + ' actividad' + (ejFiltrados.length!==1?'es':'') + '</span>';
+  html += '</div>'; // fin filtros
+
+  if (!ejFiltrados.length) {
+    html += '<p style="color:var(--text-muted);padding:8px;">No hay actividades con estos filtros.</p>';
+    html += '</div>';
+    cont.innerHTML = html;
+    cont._filtroTipo = filtroTipo; cont._filtroTema = filtroTema;
+    return;
+  }
+
+  // Leyenda
+  html += '<div style="display:flex;gap:16px;margin-bottom:10px;flex-wrap:wrap;">'
+    + '<span style="font-size:0.8rem;">✅ Entregado y revisado</span>'
+    + '<span style="font-size:0.8rem;">🕐 Entregado, sin revisar</span>'
+    + '<span style="font-size:0.8rem;">⬜ No entregado</span>'
+    + '</div>';
+
+  // Tabla
+  html += '<table style="border-collapse:collapse;font-size:0.82rem;min-width:100%;">';
+
+  // Cabecera: nombre + una columna por ejercicio + columna resumen
+  html += '<thead><tr style="background:var(--bg-alt,rgba(0,0,0,0.04));">';
+  html += '<th style="padding:8px 12px;text-align:left;border:1px solid var(--border);min-width:150px;position:sticky;left:0;background:var(--bg-alt,rgba(240,240,245,1));">Alumno</th>';
+  ejFiltrados.forEach(function(e) {
+    var tit = e.titulo || ('Ej. ' + String(e.id).slice(-4));
+    var tipo = tipoLabel[e.tipo || ''] || 'Ejercicio';
+    var tema = e.tema ? (' T' + (e.tema+'').replace(/\D/g,'')) : '';
+    html += '<th style="padding:6px 8px;border:1px solid var(--border);text-align:center;max-width:110px;min-width:80px;" title="' + _escSeg(tit) + '">'
+      + '<div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100px;" title="' + _escSeg(tit) + '">' + _escSeg(tit.length>18 ? tit.slice(0,16)+'…' : tit) + '</div>'
+      + '<div style="color:var(--text-muted);font-weight:400;font-size:0.75rem;">' + tipo + tema + '</div>'
+      + '</th>';
+  });
+  html += '<th style="padding:8px;border:1px solid var(--border);text-align:center;min-width:80px;background:var(--bg-alt,rgba(240,240,245,1));">Progreso</th>';
+  html += '</tr></thead><tbody>';
+
+  // Fila por alumno
+  alumnos.forEach(function(alu, ai) {
+    var hechos = 0, revisados = 0;
+    var rowBg = ai % 2 === 0 ? '' : 'background:rgba(0,0,0,0.015);';
+    html += '<tr style="' + rowBg + '">';
+    html += '<td style="padding:7px 12px;border:1px solid var(--border);font-weight:500;white-space:nowrap;position:sticky;left:0;background:' + (ai%2===0?'var(--bg,#fff)':'rgba(248,248,252,1)') + ';">' + _escSeg(alu.nombre || alu.id) + '</td>';
+
+    ejFiltrados.forEach(function(e) {
+      // Ver si este ejercicio está asignado a este alumno
+      var asignados = e.alumnosIds;
+      var paraEsteAlumno = !asignados || !asignados.length || asignados.indexOf(alu.id) !== -1;
+
+      if (!paraEsteAlumno) {
+        // No asignado → celda gris
+        html += '<td style="padding:6px;border:1px solid var(--border);text-align:center;background:rgba(0,0,0,0.04);" title="No asignado"><span style="color:var(--text-muted);font-size:0.75rem;">—</span></td>';
+        return;
+      }
+
+      var k   = alu.id + '||' + e.id;
+      var rep = respIdx[k];
+      if (rep) {
+        hechos++;
+        if (rep.evaluacion) {
+          revisados++;
+          // Entregado y evaluado
+          html += '<td style="padding:6px;border:1px solid var(--border);text-align:center;background:rgba(72,187,120,0.12);" title="Entregado · ' + _escSeg(rep.fecha||'') + '">✅<div style="font-size:0.7rem;color:var(--text-muted);">' + _escSeg(rep.fecha||'') + '</div></td>';
+        } else {
+          // Entregado pero sin revisar
+          html += '<td style="padding:6px;border:1px solid var(--border);text-align:center;background:rgba(237,137,54,0.12);" title="Entregado · pendiente revisión · ' + _escSeg(rep.fecha||'') + '">🕐<div style="font-size:0.7rem;color:var(--text-muted);">' + _escSeg(rep.fecha||'') + '</div></td>';
+        }
+      } else {
+        // No entregado
+        html += '<td style="padding:6px;border:1px solid var(--border);text-align:center;">⬜</td>';
+      }
+    });
+
+    // Columna progreso
+    var total = ejFiltrados.filter(function(e){
+      var a = e.alumnosIds; return !a||!a.length||a.indexOf(alu.id)!==-1;
+    }).length;
+    var pct = total > 0 ? Math.round(hechos/total*100) : 0;
+    var colorBarra = pct === 100 ? '#48bb78' : pct >= 50 ? '#ed8936' : '#e53e3e';
+    html += '<td style="padding:6px 10px;border:1px solid var(--border);text-align:center;">'
+      + '<div style="font-weight:700;font-size:0.88rem;">' + hechos + '/' + total + '</div>'
+      + '<div style="height:5px;background:var(--border);border-radius:3px;margin-top:3px;">'
+      + '<div style="width:' + pct + '%;height:100%;background:' + colorBarra + ';border-radius:3px;"></div></div>'
+      + '</td>';
+
+    html += '</tr>';
+  });
+
+  // Fila resumen (cuántos alumnos entregaron cada ejercicio)
+  html += '<tr style="background:var(--bg-alt,rgba(240,240,245,1));font-weight:600;">';
+  html += '<td style="padding:7px 12px;border:1px solid var(--border);position:sticky;left:0;background:var(--bg-alt,rgba(240,240,245,1));">Entregas</td>';
+  ejFiltrados.forEach(function(e) {
+    var asignados = e.alumnosIds;
+    var total = alumnos.filter(function(a){ return !asignados||!asignados.length||asignados.indexOf(a.id)!==-1; }).length;
+    var n = alumnos.filter(function(a){
+      if (asignados&&asignados.length&&asignados.indexOf(a.id)===-1) return false;
+      return !!respIdx[a.id+'||'+e.id];
+    }).length;
+    var pct2 = total > 0 ? Math.round(n/total*100) : 0;
+    var col2 = pct2===100?'#48bb78':pct2>=50?'#ed8936':'#e53e3e';
+    html += '<td style="padding:6px;border:1px solid var(--border);text-align:center;">'
+      + '<span style="color:' + col2 + ';">' + n + '/' + total + '</span>'
+      + '</td>';
+  });
+  html += '<td style="border:1px solid var(--border);"></td>';
+  html += '</tr>';
+
+  html += '</tbody></table></div>';
+
+  cont.innerHTML = html;
+  cont._filtroTipo = filtroTipo;
+  cont._filtroTema = filtroTema;
+}
+
+function _escSeg(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function renderProfSeguimientoFiltro() {
+  var cont = document.getElementById('prof-seguimiento-content');
+  if (!cont) return;
+  var selTipo = document.getElementById('seg-filtro-tipo');
+  var selTema = document.getElementById('seg-filtro-tema');
+  cont._filtroTipo = selTipo ? selTipo.value : 'todos';
+  cont._filtroTema = selTema ? selTema.value : 'todos';
+  renderProfSeguimiento();
+}
+
 function renderProfIA() {
   var cont = document.getElementById('prof-ia-content');
   if (!cont) return;
