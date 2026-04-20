@@ -13645,15 +13645,34 @@ function getSubFecha(cKey) {
 
 
 // ── Persistencia en tiempo real de borradores ─────────────────
-// Ejercicio del profesor: guarda las filas actuales de un subasiento
+// Ejercicio del profesor: guarda las filas actuales de un subasiento en localStorage
 function _guardarBorradorEj(cKey) {
-  var filas = getSubAsiento ? getSubAsiento(cKey) : [];
-  if (filas && filas.length) {
-    if (!window._subRowData) window._subRowData = {};
-    // subRowData ya está actualizado; solo disparar autoGuardar
-  }
+  // Leer valores actuales del DOM y persistirlos en localStorage
+  // (protege frente a re-renders del panel y recargas de página)
+  var rows = (window._subRowData && window._subRowData[cKey]) || [];
+  var filas = rows.map(function(r) {
+    return {
+      rid:    r.rid,
+      tipo:   r.tipo,
+      cuenta: (document.getElementById('srn-'   + cKey + '-' + r.rid)||{}).value || '',
+      nombre: (document.getElementById('srnom-' + cKey + '-' + r.rid)||{}).value || '',
+      debe:   (document.getElementById('srd-'   + cKey + '-' + r.rid)||{}).value || '',
+      haber:  (document.getElementById('srh-'   + cKey + '-' + r.rid)||{}).value || ''
+    };
+  });
+  _setBorrador('ej_' + cKey, filas);
   clearTimeout(window._borrEjTimer);
   window._borrEjTimer = setTimeout(function() { autoGuardarProgreso(); }, 800);
+}
+
+// Guarda todos los borradores de ejercicios activos (llamado antes de re-renderizar)
+function _guardarTodosLosBorradoresEj() {
+  if (!window._subRowData) return;
+  Object.keys(window._subRowData).forEach(function(cKey) {
+    if (document.getElementById('srows-' + cKey)) {
+      _guardarBorradorEj(cKey);
+    }
+  });
 }
 
 // Reto: guarda el estado de un asiento de reto
