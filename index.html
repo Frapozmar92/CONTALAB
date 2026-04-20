@@ -18528,7 +18528,7 @@ async function cargarChatIAModoAlumno() {
     var rows = await sbSelect('config', 'clave=eq.chatia_modo_alumno');
     if (rows.length && rows[0].valor) {
       var v = String(rows[0].valor).trim();
-      APP_DATA._chatiaModoAlumno = (v === 'libre') ? 'libre' : 'guia';
+      APP_DATA._chatiaModoAlumno = (v === 'libre' || v === 'off') ? v : 'guia';
     } else {
       APP_DATA._chatiaModoAlumno = 'guia';
     }
