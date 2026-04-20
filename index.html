@@ -4816,6 +4816,7 @@ function renderMayor() {
   }
   var natMap = {};
   ALL_CUENTAS.forEach(function(c) { if (c.num && !natMap[c.num]) natMap[c.num] = c.nat; });
+  var natClasses = { ACTIVO:'t-activo', PASIVO:'t-pasivo', 'PATRIMONIO NETO':'t-pn', GASTO:'t-gasto', INGRESO:'t-ingreso' };
   var html = '';
   for (var k = 0; k < keys.length; k++) {
     var num = keys[k];
