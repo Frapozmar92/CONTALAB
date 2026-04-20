@@ -18580,57 +18580,76 @@ function renderProfIA() {
   var modo = (APP_DATA._chatiaModoAlumno === 'libre') ? 'libre' : 'guia';
   var isLibre = modo === 'libre';
   cont.innerHTML = ''
-    + '<div class="prof-form" style="max-width:720px;">'
-    +   '<div class="prof-form-title">🤖 Configuración del Tutor IA</div>'
-    +   '<p style="color:var(--text-muted);font-size:0.9rem;line-height:1.6;margin:4px 0 16px;">'
-    +     'Controla cómo responde el tutor IA a los <strong>alumnos</strong>. Este ajuste es global: se aplica a toda la clase. '
-    +     'Tu propio chat (profesor) no se ve afectado por esta opción.'
+
+    // ── SECCIÓN 1: Modo del tutor ──────────────────────────────────────────
+    + '<div class="prof-form" style="max-width:720px;margin-bottom:28px;">'
+    +   '<div class="prof-form-title">🎓 Modo del Tutor para Alumnos</div>'
+    +   '<p style="color:var(--text-muted);font-size:0.88rem;line-height:1.6;margin:4px 0 14px;">'
+    +     'Ajuste global: se aplica a todos los alumnos. Tu chat de profesor no se ve afectado.'
     +   '</p>'
-    +   '<div class="prof-field" style="display:flex;flex-direction:column;gap:12px;">'
-    +     '<label style="display:flex;gap:10px;align-items:flex-start;padding:12px;border:2px solid ' + (!isLibre ? 'var(--accent4)' : 'var(--border)') + ';border-radius:8px;cursor:pointer;background:' + (!isLibre ? 'rgba(58,91,191,0.05)' : 'transparent') + ';">'
+    +   '<div class="prof-field" style="display:flex;flex-direction:column;gap:10px;">'
+    +     '<label style="display:flex;gap:10px;align-items:flex-start;padding:11px 14px;border:2px solid ' + (!isLibre ? 'var(--accent4)' : 'var(--border)') + ';border-radius:8px;cursor:pointer;background:' + (!isLibre ? 'rgba(58,91,191,0.05)' : 'transparent') + ';">'
     +       '<input type="radio" name="pfia-modo" value="guia" ' + (!isLibre ? 'checked' : '') + ' onchange="_profIAPreview(this.value)" style="margin-top:3px;">'
-    +       '<div style="flex:1;">'
-    +         '<div style="font-weight:600;font-size:0.95rem;">🎓 Modo Guía <span style="color:var(--text-muted);font-weight:400;font-size:0.82rem;">(recomendado)</span></div>'
-    +         '<div style="color:var(--text-muted);font-size:0.85rem;margin-top:4px;line-height:1.5;">'
-    +           'El tutor <strong>no da las soluciones</strong> de los ejercicios. Hace preguntas socráticas, explica conceptos del PGC, orienta al alumno para que piense. Ideal durante el aprendizaje y las evaluaciones.'
-    +         '</div>'
-    +       '</div>'
+    +       '<div><div style="font-weight:600;font-size:0.93rem;">🎓 Modo Guía <span style="color:var(--text-muted);font-weight:400;font-size:0.81rem;">(recomendado)</span></div>'
+    +       '<div style="color:var(--text-muted);font-size:0.83rem;margin-top:3px;">No da soluciones directas. Orienta con preguntas. Ideal para exámenes y aprendizaje.</div></div>'
     +     '</label>'
-    +     '<label style="display:flex;gap:10px;align-items:flex-start;padding:12px;border:2px solid ' + (isLibre ? 'var(--accent4)' : 'var(--border)') + ';border-radius:8px;cursor:pointer;background:' + (isLibre ? 'rgba(58,91,191,0.05)' : 'transparent') + ';">'
+    +     '<label style="display:flex;gap:10px;align-items:flex-start;padding:11px 14px;border:2px solid ' + (isLibre ? 'var(--accent4)' : 'var(--border)') + ';border-radius:8px;cursor:pointer;background:' + (isLibre ? 'rgba(58,91,191,0.05)' : 'transparent') + ';">'
     +       '<input type="radio" name="pfia-modo" value="libre" ' + (isLibre ? 'checked' : '') + ' onchange="_profIAPreview(this.value)" style="margin-top:3px;">'
-    +       '<div style="flex:1;">'
-    +         '<div style="font-weight:600;font-size:0.95rem;">🔓 Modo Libre</div>'
-    +         '<div style="color:var(--text-muted);font-size:0.85rem;margin-top:4px;line-height:1.5;">'
-    +           'El tutor <strong>responde y resuelve</strong> con normalidad. Útil para repasos, sesiones de dudas abiertas o cuando quieras que la IA ayude a resolver casos.'
-    +         '</div>'
-    +       '</div>'
+    +       '<div><div style="font-weight:600;font-size:0.93rem;">🔓 Modo Libre</div>'
+    +       '<div style="color:var(--text-muted);font-size:0.83rem;margin-top:3px;">Responde y resuelve con normalidad. Para repasos y dudas abiertas.</div></div>'
     +     '</label>'
     +   '</div>'
-    +   '<div style="margin-top:18px;display:flex;gap:10px;align-items:center;">'
+    +   '<div style="margin-top:14px;display:flex;gap:10px;align-items:center;">'
     +     '<button class="btn btn-primary" onclick="_profIAGuardar()">💾 Guardar modo</button>'
-    +     '<span id="pfia-estado" style="color:var(--text-muted);font-size:0.85rem;">Modo activo: <strong>' + (isLibre ? 'Libre' : 'Guía') + '</strong></span>'
+    +     '<span id="pfia-estado" style="color:var(--text-muted);font-size:0.84rem;">Modo activo: <strong>' + (isLibre ? 'Libre' : 'Guía') + '</strong></span>'
     +   '</div>'
+    + '</div>'
+
+    // ── SECCIÓN 2: Documentos de referencia ───────────────────────────────
+    + '<div class="prof-form" style="max-width:720px;">'
+    +   '<div class="prof-form-title">📄 Documentos de Referencia (RAG)</div>'
+    +   '<p style="color:var(--text-muted);font-size:0.88rem;line-height:1.6;margin:4px 0 14px;">'
+    +     'Añade el PGC 2007, normativa, apuntes u otros textos. La IA buscará automáticamente '
+    +     'los fragmentos relevantes antes de responder cada pregunta.'
+    +   '</p>'
+
+    // Formulario añadir
+    +   '<div style="background:var(--bg-alt,rgba(0,0,0,0.03));border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:16px;">'
+    +     '<div style="font-weight:600;font-size:0.88rem;margin-bottom:10px;">➕ Añadir documento</div>'
+    +     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">'
+    +       '<div><label class="prof-label">Título del documento *</label>'
+    +       '<input class="prof-input" id="pfia-doc-titulo" placeholder="Ej: PGC 2007 — Parte I" style="width:100%;box-sizing:border-box;"></div>'
+    +       '<div><label class="prof-label">Sección (opcional)</label>'
+    +       '<input class="prof-input" id="pfia-doc-seccion" placeholder="Ej: Marco conceptual" style="width:100%;box-sizing:border-box;"></div>'
+    +     '</div>'
+    +     '<div style="margin-bottom:10px;"><label class="prof-label">URL de la página web (opcional)</label>'
+    +     '<input class="prof-input" id="pfia-doc-url" placeholder="https://... (si dejas esto, rellena el texto de abajo)" style="width:100%;box-sizing:border-box;"></div>'
+    +     '<div style="margin-bottom:10px;"><label class="prof-label">Texto del documento (pega aquí el contenido)</label>'
+    +     '<textarea class="prof-textarea" id="pfia-doc-texto" rows="5" placeholder="Pega aquí el texto del PGC, normativa, apuntes... Puedes pegar varios miles de palabras." style="width:100%;box-sizing:border-box;min-height:100px;"></textarea></div>'
+    +     '<div style="display:flex;gap:10px;align-items:center;">'
+    +       '<button class="btn btn-primary" onclick="_profIASubirDoc()" id="pfia-doc-btn">📤 Procesar e indexar</button>'
+    +       '<span id="pfia-doc-estado" style="color:var(--text-muted);font-size:0.83rem;"></span>'
+    +     '</div>'
+    +   '</div>'
+
+    // Lista de documentos
+    +   '<div id="pfia-docs-lista"><div style="color:var(--text-muted);font-size:0.85rem;padding:8px 0;">Cargando documentos…</div></div>'
     + '</div>';
+
+  // Cargar lista de documentos en diferido
+  _profIACargarDocs();
 }
 
 function _profIAPreview(modo) {
-  // Rerenderiza para reflejar visualmente la selección sin guardar aún
   APP_DATA._chatiaModoAlumnoPreview = modo;
   var est = document.getElementById('pfia-estado');
   if (est) est.innerHTML = 'Pendiente de guardar: <strong>' + (modo === 'libre' ? 'Libre' : 'Guía') + '</strong>';
-  // Actualiza bordes/fondo de las tarjetas
-  var radios = document.getElementsByName('pfia-modo');
-  for (var i = 0; i < radios.length; i++) {
-    var lbl = radios[i].parentElement;
-    if (!lbl) continue;
-    if (radios[i].value === modo) {
-      lbl.style.border = '2px solid var(--accent4)';
-      lbl.style.background = 'rgba(58,91,191,0.05)';
-    } else {
-      lbl.style.border = '2px solid var(--border)';
-      lbl.style.background = 'transparent';
-    }
-  }
+  document.getElementsByName('pfia-modo').forEach(function(r) {
+    var lbl = r.parentElement;
+    if (!lbl) return;
+    lbl.style.border = '2px solid ' + (r.value === modo ? 'var(--accent4)' : 'var(--border)');
+    lbl.style.background = r.value === modo ? 'rgba(58,91,191,0.05)' : 'transparent';
+  });
 }
 
 async function _profIAGuardar() {
@@ -18638,6 +18657,115 @@ async function _profIAGuardar() {
   if (!sel) return;
   var ok = await guardarChatIAModoAlumno(sel.value);
   if (ok) renderProfIA();
+}
+
+// ── DOCUMENTOS RAG ─────────────────────────────────────────────────────────
+
+async function _profIACargarDocs() {
+  var lista = document.getElementById('pfia-docs-lista');
+  if (!lista) return;
+  try {
+    // Obtener títulos únicos con recuento de fragmentos
+    var r = await fetch(SUPABASE_URL + '/rest/v1/documentos_ia?select=titulo,seccion&order=titulo.asc', {
+      headers: sbHeaders()
+    });
+    if (!r.ok) { lista.innerHTML = '<div style="color:var(--red);font-size:0.83rem;">Error al cargar documentos (HTTP ' + r.status + ')</div>'; return; }
+    var rows = await r.json();
+    if (!rows || rows.length === 0) {
+      lista.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;padding:6px 0;">No hay documentos indexados todavía.</div>';
+      return;
+    }
+    // Agrupar por título
+    var grupos = {};
+    rows.forEach(function(row) {
+      if (!grupos[row.titulo]) grupos[row.titulo] = { titulo: row.titulo, fragmentos: 0 };
+      grupos[row.titulo].fragmentos++;
+    });
+    var titulos = Object.values(grupos);
+    var html = '<div style="font-weight:600;font-size:0.86rem;margin-bottom:8px;color:var(--text-muted);">'
+      + titulos.length + ' documento' + (titulos.length !== 1 ? 's' : '') + ' indexado' + (titulos.length !== 1 ? 's' : '') + '</div>';
+    html += '<div style="display:flex;flex-direction:column;gap:6px;">';
+    titulos.forEach(function(doc) {
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;'
+        + 'background:var(--bg-alt,rgba(0,0,0,0.03));border:1px solid var(--border);border-radius:6px;">'
+        + '<div><div style="font-weight:600;font-size:0.87rem;">📄 ' + _esc(doc.titulo) + '</div>'
+        + '<div style="color:var(--text-muted);font-size:0.78rem;margin-top:2px;">' + doc.fragmentos + ' fragmento' + (doc.fragmentos !== 1 ? 's' : '') + ' indexado' + (doc.fragmentos !== 1 ? 's' : '') + '</div></div>'
+        + '<button class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red);" '
+        + 'onclick="_profIAEliminarDoc(\'' + _esc(doc.titulo).replace(/'/g, "\\'") + '\',this)">🗑 Eliminar</button>'
+        + '</div>';
+    });
+    html += '</div>';
+    lista.innerHTML = html;
+  } catch(e) {
+    if (lista) lista.innerHTML = '<div style="color:var(--red);font-size:0.83rem;">Error: ' + e.message + '</div>';
+  }
+}
+
+function _esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+async function _profIASubirDoc() {
+  var titulo = (document.getElementById('pfia-doc-titulo').value || '').trim();
+  var seccion = (document.getElementById('pfia-doc-seccion').value || '').trim();
+  var url = (document.getElementById('pfia-doc-url').value || '').trim();
+  var texto = (document.getElementById('pfia-doc-texto').value || '').trim();
+  var estado = document.getElementById('pfia-doc-estado');
+  var btn = document.getElementById('pfia-doc-btn');
+
+  if (!titulo) { flash('⚠ Escribe un título para el documento', 'var(--red)'); return; }
+  if (!texto && !url) { flash('⚠ Pega el texto o introduce una URL', 'var(--red)'); return; }
+
+  btn.disabled = true;
+  if (estado) estado.textContent = '⏳ Procesando y generando embeddings…';
+
+  try {
+    var headers = { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + (_sbAuthToken || SUPABASE_KEY) };
+    var body = { titulo: titulo, seccion: seccion };
+    if (texto) body.texto = texto;
+    if (url)   body.url   = url;
+
+    var r = await fetch(SUPABASE_URL + '/functions/v1/procesar-documento', {
+      method: 'POST', headers: headers, body: JSON.stringify(body)
+    });
+    var data = await r.json();
+    if (!r.ok) {
+      if (estado) estado.textContent = '';
+      flash('⚠ Error: ' + (data.error || ('HTTP ' + r.status)), 'var(--red)');
+      return;
+    }
+    if (estado) estado.textContent = '✓ ' + data.chunks_guardados + ' fragmentos indexados';
+    flash('✓ "' + titulo + '" indexado (' + data.chunks_guardados + ' fragmentos)', 'var(--green)');
+    // Limpiar formulario
+    document.getElementById('pfia-doc-titulo').value = '';
+    document.getElementById('pfia-doc-seccion').value = '';
+    document.getElementById('pfia-doc-url').value = '';
+    document.getElementById('pfia-doc-texto').value = '';
+    // Recargar lista
+    _profIACargarDocs();
+  } catch(e) {
+    if (estado) estado.textContent = '';
+    flash('⚠ Error de red: ' + e.message, 'var(--red)');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function _profIAEliminarDoc(titulo, btnEl) {
+  if (!confirm('¿Eliminar el documento "' + titulo + '" y todos sus fragmentos?')) return;
+  btnEl.disabled = true;
+  try {
+    var headers = { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + (_sbAuthToken || SUPABASE_KEY) };
+    var r = await fetch(SUPABASE_URL + '/functions/v1/procesar-documento', {
+      method: 'DELETE', headers: headers, body: JSON.stringify({ titulo: titulo })
+    });
+    if (!r.ok) { flash('⚠ Error al eliminar (HTTP ' + r.status + ')', 'var(--red)'); btnEl.disabled = false; return; }
+    flash('✓ Documento eliminado', 'var(--green)');
+    _profIACargarDocs();
+  } catch(e) {
+    flash('⚠ Error de red: ' + e.message, 'var(--red)');
+    btnEl.disabled = false;
+  }
 }
 
 async function guardarTemasConfig() {
