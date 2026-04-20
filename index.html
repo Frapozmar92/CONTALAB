@@ -11228,7 +11228,8 @@ function switchProfTab(tab) {
   });
   if (tab === 'lista')  renderProfLista();
   if (tab === 'temas')  renderProfTemas();
-  if (tab === 'ia')     renderProfIA();
+  if (tab === 'ia')          renderProfIA();
+  if (tab === 'seguimiento') renderProfSeguimiento();
   if (tab === 'reto' && !_retoEditingId) { resetRetoForm(); }
   if (tab === 'examen-test') {
     actualizarBolsaInfo();
