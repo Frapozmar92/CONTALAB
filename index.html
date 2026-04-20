@@ -19822,12 +19822,26 @@ function teoriaProfToggleVista(num, i, vista) {
 var _chatIAHistorial = []; // [{role:'user'|'assistant', content:''}]
 var _chatIAEnviando  = false;
 
+var _chatIAModoUltimaRecarga = 0;
 function chatIAMostrarBoton() {
   var fab = document.getElementById('chatia-fab');
   if (!fab) return;
   var esProfesor = typeof currentUser !== 'undefined' && currentUser && currentUser.rol === 'profesor';
   var esAlumno   = typeof currentUser !== 'undefined' && currentUser && currentUser.rol === 'alumno';
-  // Para alumnos: ocultar si el profesor ha desactivado el chat
+
+  // Para alumnos: re-consultar el modo cada 30 s por si el profesor lo cambió en tiempo real
+  if (esAlumno && Date.now() - _chatIAModoUltimaRecarga > 30000) {
+    _chatIAModoUltimaRecarga = Date.now();
+    sbSelect('config', 'clave=eq.chatia_modo_alumno').then(function(rows) {
+      if (rows && rows.length && rows[0].valor) {
+        var v = String(rows[0].valor).trim();
+        APP_DATA._chatiaModoAlumno = (v === 'libre' || v === 'off') ? v : 'guia';
+      } else {
+        APP_DATA._chatiaModoAlumno = 'guia';
+      }
+    }).catch(function(){});
+  }
+
   var desactivado = esAlumno && APP_DATA && APP_DATA._chatiaModoAlumno === 'off';
   if ((esProfesor || esAlumno) && !desactivado) {
     fab.classList.add('visible');
