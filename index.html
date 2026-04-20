@@ -3090,6 +3090,20 @@ resetProfForm = function() {
                 <button class="btn btn-outline btn-sm" onclick="addRetoSub()" style="margin-top:10px;width:100%;border-style:dashed;">＋ Añadir operación</button>
               </div>
 
+              <!-- LIBRO MAYOR DEL RETO -->
+              <div class="prof-field" style="margin-top:4px;">
+                <button class="btn btn-outline btn-sm" onclick="toggleRetoMayor()" id="pfr-mayor-btn" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;">
+                  <span>📒 Ver Libro Mayor</span><span id="pfr-mayor-arrow" style="font-size:0.7rem;">▼</span>
+                </button>
+                <div id="pfr-mayor-section" style="display:none;margin-top:12px;border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+                  <div style="padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:0.8rem;font-weight:600;color:var(--text);">📒 Libro Mayor — operaciones del reto</span>
+                    <button class="btn btn-outline btn-sm" onclick="renderRetoMayor()" style="font-size:0.72rem;padding:4px 10px;">🔄 Actualizar</button>
+                  </div>
+                  <div id="pfr-mayor-grid" class="mayor-grid" style="padding:16px;gap:12px;"></div>
+                </div>
+              </div>
+
               <div class="prof-field">
                 <label class="prof-label">Pista general <span style="font-weight:400;color:var(--text-muted);">(opcional — visible antes de intentarlo)</span></label>
                 <textarea class="prof-textarea" id="pfr-pista" rows="2" placeholder="Ej: Recuerda identificar primero si la operación es de compra o de venta y si hay IVA implicado."></textarea>
@@ -6570,8 +6584,6 @@ function renderTemaTab(num, tab) {
     renderTemaClasificacion(num);
   } else if (tab === 'pmp') {
     renderTemaPMP(num);
-  } else if (tab === 'mayor') {
-    renderTemaMayor(num);
   } else if (tab === 'reto') {
     renderTemaReto(num);
   } else if (tab === 'examen') {
