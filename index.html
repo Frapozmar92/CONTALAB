@@ -18654,8 +18654,10 @@ function _profIAPreview(modo) {
   document.getElementsByName('pfia-modo').forEach(function(r) {
     var lbl = r.parentElement;
     if (!lbl) return;
-    lbl.style.border = '2px solid ' + (r.value === modo ? 'var(--accent4)' : 'var(--border)');
-    lbl.style.background = r.value === modo ? 'rgba(58,91,191,0.05)' : 'transparent';
+    var sel = r.value === modo;
+    var isOff = r.value === 'off';
+    lbl.style.border = sel ? ('2px solid ' + (isOff ? 'var(--red,#e53e3e)' : 'var(--accent4)')) : '2px solid var(--border)';
+    lbl.style.background = sel ? (isOff ? 'rgba(229,62,62,0.05)' : 'rgba(58,91,191,0.05)') : 'transparent';
   });
 }
 
