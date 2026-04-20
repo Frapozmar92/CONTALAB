@@ -18577,8 +18577,10 @@ async function guardarChatIAModoAlumno(modo) {
 function renderProfIA() {
   var cont = document.getElementById('prof-ia-content');
   if (!cont) return;
-  var modo = (APP_DATA._chatiaModoAlumno === 'libre') ? 'libre' : 'guia';
+  var modo = APP_DATA._chatiaModoAlumno || 'guia';
+  if (modo !== 'libre' && modo !== 'off') modo = 'guia';
   var isLibre = modo === 'libre';
+  var isOff   = modo === 'off';
   cont.innerHTML = ''
 
     // ── SECCIÓN 1: Modo del tutor ──────────────────────────────────────────
