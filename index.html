@@ -16028,20 +16028,44 @@ function renderRetoMayor() {
   if (!grid) return;
 
   // Construir mayor a partir de las filas actuales del formulario
+  // Helper: acumular una fila en tmpMayor
   var tmpMayor = {};
-  _retoSubs.forEach(function(sub) {
-    var sid = sub.sid;
+  function acumularFila(num, nom, debe, haber, opLabel) {
+    if (!num) return;
+    if (!tmpMayor[num]) tmpMayor[num] = { nombre: nom || num, debe: [], haber: [] };
+    if (nom && !tmpMayor[num].nombre) tmpMayor[num].nombre = nom;
+    if (debe  > 0) tmpMayor[num].debe.push({ amount: debe,  desc: opLabel });
+    if (haber > 0) tmpMayor[num].haber.push({ amount: haber, desc: opLabel });
+  }
+
+  _retoSubs.forEach(function(sub, subIdx) {
+    var sid      = sub.sid;
+    var opLabel  = 'Op.' + (subIdx + 1);
+
+    // Asiento 1 — filas en reto-fn / reto-fd / reto-fh
     (sub.filas || []).forEach(function(f) {
-      var num   = (document.getElementById('reto-fn-'   + sid + '-' + f.fid)||{}).value || '';
-      var nom   = (document.getElementById('reto-fnom-' + sid + '-' + f.fid)||{}).value || '';
-      var debe  = parseFloat((document.getElementById('reto-fd-'   + sid + '-' + f.fid)||{}).value || '') || 0;
-      var haber = parseFloat((document.getElementById('reto-fh-'   + sid + '-' + f.fid)||{}).value || '') || 0;
-      if (!num) return;
-      if (!tmpMayor[num]) tmpMayor[num] = { nombre: nom || num, debe: [], haber: [] };
-      if (!tmpMayor[num].nombre && nom) tmpMayor[num].nombre = nom;
-      var opLabel = 'Op.' + (_retoSubs.indexOf(sub) + 1);
-      if (debe  > 0) tmpMayor[num].debe.push({ amount: debe,  desc: opLabel });
-      if (haber > 0) tmpMayor[num].haber.push({ amount: haber, desc: opLabel });
+      acumularFila(
+        (document.getElementById('reto-fn-'   + sid + '-' + f.fid)||{}).value || '',
+        (document.getElementById('reto-fnom-' + sid + '-' + f.fid)||{}).value || '',
+        parseFloat((document.getElementById('reto-fd-' + sid + '-' + f.fid)||{}).value || '') || 0,
+        parseFloat((document.getElementById('reto-fh-' + sid + '-' + f.fid)||{}).value || '') || 0,
+        opLabel + '.A1'
+      );
+    });
+
+    // Asientos adicionales (2, 3…) — almacenados en _maExtra['rt_sid']
+    var extras = _maExtra[maKey('rt', sid)] || [];
+    extras.forEach(function(ax) {
+      var asLabel = opLabel + '.A' + ax.aid;
+      (ax.filas || []).forEach(function(f) {
+        acumularFila(
+          (document.getElementById('ma-n-rt-'   + sid + '-' + ax.aid + '-' + f.fid)||{}).value || '',
+          (document.getElementById('ma-nom-rt-' + sid + '-' + ax.aid + '-' + f.fid)||{}).value || '',
+          parseFloat((document.getElementById('ma-d-rt-' + sid + '-' + ax.aid + '-' + f.fid)||{}).value || '') || 0,
+          parseFloat((document.getElementById('ma-h-rt-' + sid + '-' + ax.aid + '-' + f.fid)||{}).value || '') || 0,
+          asLabel
+        );
+      });
     });
   });
 
