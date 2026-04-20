@@ -13205,7 +13205,16 @@ async function _refrescarEjerciciosAlumno() {
     state.respuestasAlumno   = APP_DATA.respuestasAlumno;
     // Re-renderizar solo si el panel de ejercicios está visible
     var panelEj = document.getElementById('panel-ejprofesor');
-    if (panelEj && panelEj.classList.contains('active')) { renderEjProfAlumnoList(); marcarNotifLeidas(); }
+    if (panelEj && panelEj.classList.contains('active')) {
+      // Guardar todos los borradores en curso antes de cualquier re-render
+      _guardarTodosLosBorradoresEj();
+      // Si el alumno está escribiendo en un input, NO re-renderizar (evita borrar el trabajo)
+      var hayFoco = panelEj.querySelector('input:focus, textarea:focus');
+      if (!hayFoco) {
+        renderEjProfAlumnoList();
+        marcarNotifLeidas();
+      }
+    }
     // Actualizar badge de notificaciones
     contarEvaluacionesNuevas && contarEvaluacionesNuevas();
   } catch(e) { /* silencioso */ }
