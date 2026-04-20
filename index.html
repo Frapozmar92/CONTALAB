@@ -18546,7 +18546,7 @@ async function cargarChatIAModoAlumno() {
 }
 
 async function guardarChatIAModoAlumno(modo) {
-  modo = (modo === 'libre') ? 'libre' : 'guia';
+  if (modo !== 'libre' && modo !== 'off') modo = 'guia';
   var doReq = function() {
     return fetch(SUPABASE_URL + '/rest/v1/config?on_conflict=clave', {
       method: 'POST',
