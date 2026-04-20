@@ -16044,7 +16044,7 @@ function renderRetoMayor() {
       if (!num) return;
       if (!tmpMayor[num]) tmpMayor[num] = { nombre: nom || num, debe: [], haber: [] };
       if (!tmpMayor[num].nombre && nom) tmpMayor[num].nombre = nom;
-      var opLabel = 'Op.' + _retoSubs.indexOf(sub) + 1;
+      var opLabel = 'Op.' + (_retoSubs.indexOf(sub) + 1);
       if (debe  > 0) tmpMayor[num].debe.push({ amount: debe,  desc: opLabel });
       if (haber > 0) tmpMayor[num].haber.push({ amount: haber, desc: opLabel });
     });
