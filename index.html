@@ -20905,6 +20905,184 @@ document.addEventListener('DOMContentLoaded', function(){
   chatIAMostrarBoton();
 });
 </script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     GLOSARIO INLINE — tooltip sobre términos contables clave
+     Inyecta <span class="gloss" data-tip="…"> alrededor de los términos
+     que aparezcan en enunciados, descripciones, operaciones y preguntas.
+     ═══════════════════════════════════════════════════════════════ -->
+<script>
+(function() {
+  'use strict';
+
+  var GLOSARIO_FP = {
+    'amortización acumulada': 'Suma de las amortizaciones practicadas hasta la fecha (cuenta 281). Minora el valor del inmovilizado en balance — no se da de baja hasta que el activo se vende o se desecha.',
+    'amortización': 'Distribución sistemática del coste de un inmovilizado (material o intangible) a lo largo de su vida útil. Se refleja como gasto (cuenta 68) y contra la amortización acumulada (cuenta 28).',
+    'IVA soportado': 'IVA que la empresa paga al comprar bienes o servicios (cuenta 472). Es deducible si la compra está afecta a la actividad.',
+    'IVA repercutido': 'IVA que la empresa cobra al vender (cuenta 477). Se ingresa en Hacienda al liquidar el trimestre.',
+    'deterioro de valor': 'Pérdida reversible de valor de un activo cuando su importe recuperable es inferior al valor contable. Se refleja con cuenta 69x (gasto) y 29x (correctora).',
+    'deterioro': 'Pérdida reversible de valor de un activo cuando su importe recuperable es inferior al valor contable (cuentas 69x / 29x).',
+    'provisión': 'Pasivo cierto o probable cuyo importe o vencimiento es indeterminado (cuentas del grupo 14). Ejemplo: provisión para impuestos, para responsabilidades.',
+    'inmovilizado material': 'Activos tangibles de uso duradero: terrenos, construcciones, maquinaria, mobiliario… (grupo 21).',
+    'inmovilizado intangible': 'Activos no monetarios sin apariencia física: software, patentes, concesiones… (grupo 20).',
+    'inmovilizado': 'Activos no corrientes destinados a servir duraderamente a la actividad (grupos 20 y 21).',
+    'existencias': 'Activos poseídos para ser vendidos en el curso normal de la actividad o consumidos en el proceso productivo (grupo 3: mercaderías, materias primas, productos terminados…).',
+    'patrimonio neto': 'Diferencia entre activo y pasivo: aportaciones de socios, reservas, resultados acumulados y subvenciones.',
+    'capital social': 'Aportaciones de los socios al constituir o ampliar la sociedad (cuenta 100).',
+    'reserva legal': 'Reserva obligatoria por ley (art. 274 LSC): dotar el 10% del beneficio hasta que alcance el 20% del capital (cuenta 112).',
+    'reservas voluntarias': 'Reservas constituidas libremente por la junta con cargo a beneficios (cuenta 113).',
+    'asiento contable': 'Anotación en el libro diario con los cargos y abonos de una operación. Regla: Debe = Haber.',
+    'libro diario': 'Registro cronológico de todas las operaciones de la empresa en forma de asientos.',
+    'libro mayor': 'Registro por cuenta donde se acumulan los movimientos (Debe a la izquierda, Haber a la derecha) y se calcula el saldo.',
+    'balance de comprobación': 'Listado de saldos de todas las cuentas para verificar que Σ Debe = Σ Haber antes de elaborar las cuentas anuales.',
+    'balance de situación': 'Estado financiero que muestra el patrimonio en una fecha: Activo = Patrimonio neto + Pasivo.',
+    'pérdidas y ganancias': 'Cuenta de resultados: ingresos − gastos del ejercicio (cuenta 129 al cerrar).',
+    'cuenta de resultados': 'Estado que recoge los ingresos y gastos del ejercicio y calcula el beneficio o pérdida.',
+    'variación de existencias': 'Ajuste en la cuenta de resultados (grupos 61/71) que corrige el consumo real: Existencias iniciales − finales.',
+    'valor neto contable': 'Valor de un inmovilizado menos su amortización acumulada y deterioros. Es el valor por el que figura en balance.',
+    'periodificación': 'Ajuste de cierre para imputar gastos e ingresos al ejercicio en que se devengan, no cuando se cobran o pagan (cuentas 480, 485, 567, 568).',
+    'proveedores': 'Acreedores por compras de existencias o servicios del tráfico habitual (cuenta 400).',
+    'acreedores': 'Deudas con suministradores que no son proveedores del tráfico principal (cuenta 410).',
+    'clientes': 'Derechos de cobro por ventas de bienes o servicios del tráfico habitual (cuenta 430).',
+    'deudores': 'Derechos de cobro por operaciones que no son del tráfico principal (cuenta 440).',
+    'subvención': 'Ayuda pública o privada. Si es de explotación va a ingresos (740/747); si es de capital, primero a patrimonio neto (130/132) y se imputa a resultados según se amortiza el activo financiado.',
+    'leasing': 'Arrendamiento financiero con opción de compra. Se capitaliza como inmovilizado y se reconoce una deuda por el mismo importe.',
+    'renting': 'Arrendamiento operativo sin opción de compra. La cuota se imputa directamente como gasto (cuenta 621).',
+    'devengo': 'Principio contable: los efectos de las transacciones se registran cuando ocurren, con independencia de su cobro o pago.',
+    'prudencia': 'Principio contable: se recogen los riesgos y pérdidas previsibles, pero no los beneficios no realizados.',
+    'precio de adquisición': 'Importe pagado más todos los gastos adicionales para poner el bien en condiciones de uso (transporte, instalación, aranceles…).',
+    'valor razonable': 'Importe por el que podría intercambiarse un activo entre partes informadas en una transacción en condiciones de independencia mutua.',
+    'coste de producción': 'Precio de adquisición de materias primas + costes directos e indirectos imputables a la fabricación del producto.',
+    'descuento por pronto pago': 'Descuento concedido por pagar antes del vencimiento. Se registra como gasto financiero (cuenta 606) en compras o ingreso financiero (706) en ventas.',
+    'rappel': 'Descuento por volumen de compra o venta concedido por alcanzar un cierto importe anual (cuentas 609 / 709).',
+    'efectos comerciales a cobrar': 'Letras de cambio o pagarés recibidos de clientes como medio de pago (cuenta 431).',
+    'efectos comerciales a pagar': 'Letras o pagarés aceptados por la empresa a sus proveedores (cuenta 401).',
+    'Hacienda Pública': 'Administración tributaria. Cuentas 470 (deudora) y 475 (acreedora) según la posición de la empresa.'
+  };
+
+  var _GLOSARIO_REGEX = null;
+  function _getGlosarioRegex() {
+    if (_GLOSARIO_REGEX) return _GLOSARIO_REGEX;
+    // Ordenar por longitud descendente para que los términos largos se capten antes que los cortos
+    var terms = Object.keys(GLOSARIO_FP).sort(function(a, b){ return b.length - a.length; });
+    var escaped = terms.map(function(t){ return t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); });
+    // Boundaries compatibles con tildes españolas: evitar letras antes/después
+    _GLOSARIO_REGEX = new RegExp(
+      '(?<![a-záéíóúñüA-ZÁÉÍÓÚÑÜ])(' + escaped.join('|') + ')(?![a-záéíóúñüA-ZÁÉÍÓÚÑÜ])',
+      'gi'
+    );
+    return _GLOSARIO_REGEX;
+  }
+
+  function _findDef(matched) {
+    var low = matched.toLowerCase();
+    var keys = Object.keys(GLOSARIO_FP);
+    for (var i = 0; i < keys.length; i++) {
+      if (keys[i].toLowerCase() === low) return GLOSARIO_FP[keys[i]];
+    }
+    return '';
+  }
+
+  function aplicarGlosario(root) {
+    if (!root || !root.nodeType) return;
+    if (root.dataset && root.dataset.glossed === '1') return;
+    var re;
+    try { re = _getGlosarioRegex(); }
+    catch(e) { return; } // navegador sin lookbehind: abortamos silenciosamente
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode: function(node) {
+        if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        var p = node.parentNode;
+        while (p && p !== root.parentNode) {
+          if (!p.tagName) break;
+          var tn = p.tagName;
+          if (tn === 'SCRIPT' || tn === 'STYLE' || tn === 'INPUT' || tn === 'TEXTAREA' || tn === 'BUTTON' || tn === 'OPTION' || tn === 'SELECT') return NodeFilter.FILTER_REJECT;
+          if (p.classList && (p.classList.contains('gloss') || p.classList.contains('feedback-granular'))) return NodeFilter.FILTER_REJECT;
+          p = p.parentNode;
+        }
+        re.lastIndex = 0;
+        return re.test(node.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    });
+    var nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(function(textNode) {
+      var frag = document.createDocumentFragment();
+      var txt = textNode.nodeValue;
+      var last = 0, m;
+      re.lastIndex = 0;
+      while ((m = re.exec(txt)) !== null) {
+        if (m.index > last) frag.appendChild(document.createTextNode(txt.slice(last, m.index)));
+        var matched = m[1];
+        var def = _findDef(matched);
+        var span = document.createElement('span');
+        span.className = 'gloss';
+        span.setAttribute('data-tip', def);
+        span.setAttribute('tabindex', '0');
+        span.textContent = matched;
+        frag.appendChild(span);
+        last = m.index + matched.length;
+      }
+      if (last < txt.length) frag.appendChild(document.createTextNode(txt.slice(last)));
+      if (textNode.parentNode) textNode.parentNode.replaceChild(frag, textNode);
+    });
+    if (root.dataset) root.dataset.glossed = '1';
+  }
+
+  window.aplicarGlosario = aplicarGlosario;
+
+  var GLOSS_SELECTORS = [
+    '.ej-prof-intro',
+    '.ej-sub-enunciado',
+    '.exercise-desc',
+    '.operacion-desc',
+    '.question-text',
+    '.caso-desc',
+    '.pgc-det-nombre',
+    '.test-feedback',
+    '.q-explanation',
+    '.caso-day-desc'
+  ];
+  var GLOSS_SEL = GLOSS_SELECTORS.join(',');
+
+  function procesarTodo() {
+    try {
+      document.querySelectorAll(GLOSS_SEL).forEach(function(el) {
+        // Reaplicar si el contenido cambió (data-glossed se limpia cuando render reemplaza innerHTML)
+        if (el.dataset && el.dataset.glossed === '1' && !el.querySelector('.gloss')) {
+          delete el.dataset.glossed;
+        }
+        aplicarGlosario(el);
+      });
+    } catch(e) { /* noop */ }
+  }
+
+  var _glossPending = null;
+  function scheduleProcesar() {
+    if (_glossPending) return;
+    _glossPending = setTimeout(function(){ _glossPending = null; procesarTodo(); }, 80);
+  }
+
+  function initGlosario() {
+    procesarTodo();
+    if (!window.MutationObserver) return;
+    var obs = new MutationObserver(function(muts) {
+      for (var i = 0; i < muts.length; i++) {
+        var m = muts[i];
+        if (m.addedNodes && m.addedNodes.length) { scheduleProcesar(); return; }
+        if (m.type === 'characterData') { scheduleProcesar(); return; }
+      }
+    });
+    obs.observe(document.body, { childList: true, subtree: true, characterData: true });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGlosario);
+  } else {
+    initGlosario();
+  }
+})();
+</script>
 </body>
 </html>
 </body>
