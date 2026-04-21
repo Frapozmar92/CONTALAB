@@ -17161,13 +17161,16 @@ function renderTemaReto(num, retoIdxOverride) {
 
   // ── Toggle de vista: tabla ↔ diario clásico ──────────────────
   var _vmodo = window._retoVistaModo || 'tabla';
+  var _styTab = 'padding:5px 14px;border:1px solid var(--accent4);border-radius:6px;cursor:pointer;font-size:0.72rem;font-family:\'IBM Plex Mono\',monospace;text-transform:uppercase;letter-spacing:1px;transition:all 0.15s;';
+  var _styOn  = _styTab + 'background:var(--accent4);color:#fff;font-weight:600;';
+  var _styOff = _styTab + 'background:transparent;color:var(--accent4);font-weight:500;';
   html +=
-    '<div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;padding:6px 0 0;">' +
-      '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Vista</span>' +
-      '<button class="btn btn-sm ' + (_vmodo==='tabla'?'btn-primary':'btn-outline') + '" style="font-size:0.68rem;padding:3px 10px;" ' +
+    '<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 0;margin-top:4px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">' +
+      '<span style="font-family:\'Playfair Display\',serif;font-size:0.78rem;color:var(--text);font-weight:600;margin-right:4px;">📑 Vista del asiento:</span>' +
+      '<button type="button" style="' + (_vmodo==='tabla' ? _styOn : _styOff) + '" ' +
         'onclick="setRetoVistaModo(\'tabla\',' + num + ',' + idx + ')">Tabla</button>' +
-      '<button class="btn btn-sm ' + (_vmodo==='diario'?'btn-primary':'btn-outline') + '" style="font-size:0.68rem;padding:3px 10px;" ' +
-        'onclick="setRetoVistaModo(\'diario\',' + num + ',' + idx + ')">Diario</button>' +
+      '<button type="button" style="' + (_vmodo==='diario' ? _styOn : _styOff) + '" ' +
+        'onclick="setRetoVistaModo(\'diario\',' + num + ',' + idx + ')">Diario clásico</button>' +
     '</div>';
 
   // ── Cabecera de navegación: flechas + dots + contador ────────
