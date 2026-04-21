@@ -17850,12 +17850,10 @@ function confirmarRetoOp(retoId, si) {
 function retoVistaIr(retoId, num, idx) {
   var rst = retoState[retoId];
   if (!rst) return;
-  // Solo se puede navegar a operaciones ya resueltas o a la activa
-  var maxVista = rst.subActual;
   var reto = (state.ejerciciosProfesor||[]).find(function(e){ return String(e.id)===String(retoId); });
   var nSubs = reto ? (reto.subenunciados||[]).length : 0;
-  var terminado = rst.resultados.length >= nSubs && nSubs > 0;
-  if (!terminado && idx > maxVista) return; // bloqueada
+  if (nSubs === 0) return;
+  // Navegación libre entre operaciones
   rst.vistaIdx = Math.max(0, Math.min(idx, nSubs - 1));
   renderTemaReto(num);
 }
