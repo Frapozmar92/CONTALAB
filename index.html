@@ -14477,7 +14477,11 @@ function confirmarSubenunciado(ejId, si) {
 
   // Guardar respuesta completa en tabla respuestas cuando se termina el ejercicio
   var _nSubsConf = ej ? (ej.subenunciados||[]).length : 0;
-  if (est.resultados.length >= _nSubsConf && _nSubsConf > 0) {
+  var _todosResueltos = _nSubsConf > 0;
+  for (var _ri = 0; _ri < _nSubsConf; _ri++) {
+    if (!est.resultados[_ri]) { _todosResueltos = false; break; }
+  }
+  if (_todosResueltos) {
     var respCompleta = {
       ejId:          ejId,
       alumnoId:      currentUser.id,
