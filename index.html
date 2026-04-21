@@ -8255,6 +8255,173 @@ function verificarSubContraAlternativas(userAsientos, sub) {
   });
 }
 
+// ═══════════════════════════════════════════════════════════════
+// FEEDBACK GRANULAR — diagnóstico detallado del asiento erróneo
+// ═══════════════════════════════════════════════════════════════
+// Devuelve { ok, errores:[{tipo, cuenta, nombre, detalle, ...}], cuadrado }
+// tipos de error: 'no_cuadra', 'falta_cuenta', 'cuenta_sobrante',
+//                 'importe_erroneo', 'posicion_invertida'
+function diagnosticarAsiento(userFilas, solFilas) {
+  var out = { ok: false, errores: [], cuadrado: true };
+  if (!solFilas || !solFilas.length) return out;
+  var uAgrup = agruparFilas(userFilas);
+  var sAgrup = agruparFilas(solFilas);
+
+  // Cuadre del asiento del usuario
+  var tD = (userFilas||[]).reduce(function(a,r){ return a + (parseFloat(r.debe)||0); }, 0);
+  var tH = (userFilas||[]).reduce(function(a,r){ return a + (parseFloat(r.haber)||0); }, 0);
+  if (Math.abs(tD - tH) >= 0.01) {
+    out.cuadrado = false;
+    out.errores.push({
+      tipo: 'no_cuadra',
+      detalle: 'El asiento no cuadra: Debe ' + fmt(tD) + ' € ≠ Haber ' + fmt(tH) + ' €. Diferencia: ' + fmt(Math.abs(tD - tH)) + ' €.'
+    });
+  }
+
+  function k(f) { return (f.cuenta||'') + '|' + (f.tipo==='debe'?'D':'H'); }
+  function kInv(f) { return (f.cuenta||'') + '|' + (f.tipo==='debe'?'H':'D'); }
+  var uMap = {}; uAgrup.forEach(function(f){ uMap[k(f)] = f; });
+  var sMap = {}; sAgrup.forEach(function(f){ sMap[k(f)] = f; });
+
+  // 1) Cuentas presentes en la solución
+  sAgrup.forEach(function(s) {
+    var u = uMap[k(s)];
+    var uI = uMap[kInv(s)];
+    var posOK = s.tipo === 'debe' ? 'Debe' : 'Haber';
+    if (u) {
+      var impOK = s.tipo === 'debe' ? s.debe : s.haber;
+      var impUs = u.tipo === 'debe' ? u.debe : u.haber;
+      if (Math.abs(impOK - impUs) >= 0.01) {
+        out.errores.push({
+          tipo: 'importe_erroneo',
+          cuenta: s.cuenta, nombre: s.nombre, posicion: s.tipo,
+          detalle: 'Cuenta <b>' + s.cuenta + '</b>' + (s.nombre ? ' (' + s.nombre + ')' : '') + ' · ' + posOK + ': importe <b>' + fmt(impUs) + ' €</b>, la solución indica <b>' + fmt(impOK) + ' €</b>.'
+        });
+      }
+    } else if (uI) {
+      out.errores.push({
+        tipo: 'posicion_invertida',
+        cuenta: s.cuenta, nombre: s.nombre, posicionCorrecta: s.tipo,
+        detalle: 'Cuenta <b>' + s.cuenta + '</b>' + (s.nombre ? ' (' + s.nombre + ')' : '') + ': está en el <b>' + (s.tipo==='debe'?'Haber':'Debe') + '</b> y debería ir en el <b>' + posOK + '</b>.'
+      });
+    } else {
+      var impF = s.tipo === 'debe' ? s.debe : s.haber;
+      out.errores.push({
+        tipo: 'falta_cuenta',
+        cuenta: s.cuenta, nombre: s.nombre, posicion: s.tipo,
+        detalle: 'Falta la cuenta <b>' + s.cuenta + '</b>' + (s.nombre ? ' (' + s.nombre + ')' : '') + ' en el <b>' + posOK + '</b> por <b>' + fmt(impF) + ' €</b>.'
+      });
+    }
+  });
+
+  // 2) Cuentas sobrantes (en usuario pero no en solución)
+  uAgrup.forEach(function(u) {
+    if (sMap[k(u)]) return;                                // ya emparejada
+    if (sMap[(u.cuenta||'')+'|'+(u.tipo==='debe'?'H':'D')]) return; // par invertido ya marcado
+    var imp = u.tipo === 'debe' ? u.debe : u.haber;
+    out.errores.push({
+      tipo: 'cuenta_sobrante',
+      cuenta: u.cuenta, nombre: u.nombre, posicion: u.tipo,
+      detalle: 'La cuenta <b>' + u.cuenta + '</b>' + (u.nombre ? ' (' + u.nombre + ')' : '') + ' (' + (u.tipo==='debe'?'Debe':'Haber') + ' ' + fmt(imp) + ' €) no aparece en la solución.'
+    });
+  });
+
+  out.ok = out.errores.length === 0;
+  return out;
+}
+
+// Diagnóstico de un bloque multi-asiento — elige la permutación con menos errores
+function diagnosticarBloque(userAsientos, asientosDef) {
+  var n = asientosDef.length;
+  if (!userAsientos) userAsientos = [];
+  if (n === 0) return [];
+  if (n === 1 && userAsientos.length <= 1) {
+    return [diagnosticarAsiento(userAsientos[0]||[], asientosDef[0].solucion||[])];
+  }
+  // Permutaciones sólo viables si el tamaño coincide y es pequeño
+  if (userAsientos.length === n && n <= 6) {
+    function permuts(arr) {
+      if (arr.length <= 1) return [arr];
+      var res = [];
+      for (var i = 0; i < arr.length; i++) {
+        var rest = arr.slice(0, i).concat(arr.slice(i + 1));
+        permuts(rest).forEach(function(p) { res.push([arr[i]].concat(p)); });
+      }
+      return res;
+    }
+    var idx = []; for (var kk = 0; kk < n; kk++) idx.push(kk);
+    var best = null;
+    permuts(idx).forEach(function(perm) {
+      var diag = asientosDef.map(function(a, ai) {
+        return diagnosticarAsiento(userAsientos[perm[ai]]||[], a.solucion||[]);
+      });
+      var errCount = diag.reduce(function(acc, d){ return acc + d.errores.length; }, 0);
+      if (!best || errCount < best.count) best = { count: errCount, diag: diag };
+    });
+    return best.diag;
+  }
+  // Tamaños distintos: diagnosticar fila a fila y marcar faltantes/sobrantes
+  var out = [];
+  for (var ai = 0; ai < n; ai++) {
+    if (ai < userAsientos.length) {
+      out.push(diagnosticarAsiento(userAsientos[ai]||[], asientosDef[ai].solucion||[]));
+    } else {
+      out.push({ ok:false, cuadrado:true, errores:[{ tipo:'asiento_faltante', detalle:'Falta el asiento ' + (ai+1) + '.' }] });
+    }
+  }
+  for (var bi = n; bi < userAsientos.length; bi++) {
+    out.push({ ok:false, cuadrado:true, errores:[{ tipo:'asiento_sobrante', detalle:'Has introducido un asiento de más.' }] });
+  }
+  return out;
+}
+
+// Diagnóstico de un subenunciado contra solución principal + alternativas —
+// devuelve la que tenga menos errores totales.
+function diagnosticarSubenunciado(userAsientos, sub) {
+  var candidatos = [normalizarAsientos(sub)];
+  (sub.alternativas || []).forEach(function(alt) {
+    var def = (Array.isArray(alt) && alt.length && !alt[0].solucion)
+      ? [{ etiqueta:'', solucion: alt }]
+      : normalizarAsientos({ solucion: alt });
+    candidatos.push(def);
+  });
+  var best = null;
+  candidatos.forEach(function(def) {
+    var d = diagnosticarBloque(userAsientos || [], def);
+    var errCount = d.reduce(function(acc, x){ return acc + x.errores.length; }, 0);
+    if (!best || errCount < best.count) best = { count: errCount, diag: d };
+  });
+  return best ? best.diag : [];
+}
+
+// Renderiza el feedback granular en HTML (caja por asiento con lista de errores)
+function buildFeedbackGranular(diagArr, multipleAsientos) {
+  if (!diagArr || !diagArr.length) return '';
+  var cards = diagArr.map(function(d, ai) {
+    if (!d || d.ok) return '';
+    var hdr = multipleAsientos ? '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.68rem;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;">Asiento ' + (ai+1) + '</div>' : '';
+    var items = (d.errores||[]).map(function(e) {
+      var icon = '×';
+      if (e.tipo === 'importe_erroneo')     icon = '≠';
+      else if (e.tipo === 'posicion_invertida') icon = '↔';
+      else if (e.tipo === 'falta_cuenta')   icon = '+';
+      else if (e.tipo === 'cuenta_sobrante')icon = '−';
+      else if (e.tipo === 'no_cuadra')      icon = '⚖';
+      else if (e.tipo === 'asiento_faltante' || e.tipo === 'asiento_sobrante') icon = '!';
+      return '<li style="display:flex;gap:8px;align-items:flex-start;padding:5px 0;line-height:1.45;">' +
+        '<span style="flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;background:rgba(168,68,31,0.12);color:var(--accent3);font-weight:700;font-size:0.78rem;margin-top:1px;">' + icon + '</span>' +
+        '<span style="flex:1;font-size:0.82rem;color:var(--text);">' + e.detalle + '</span>' +
+      '</li>';
+    }).join('');
+    return '<div style="padding:12px 14px;background:rgba(168,68,31,0.05);border:1px solid rgba(168,68,31,0.22);border-radius:8px;margin-bottom:10px;">' +
+      hdr + '<ul style="list-style:none;margin:0;padding:0;">' + items + '</ul></div>';
+  }).filter(function(x){ return x; }).join('');
+  if (!cards) return '';
+  return '<div class="feedback-granular" style="margin-top:10px;">' +
+    '<div style="font-family:\'Playfair Display\',serif;font-size:0.95rem;font-weight:700;color:var(--accent3);margin-bottom:8px;">Qué revisar</div>' +
+    cards + '</div>';
+}
+
 // CLASIFICACIÓN PATRIMONIAL
 var clsSelected = null;
 function renderTemaClasificacion(num) {
