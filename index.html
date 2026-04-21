@@ -14030,6 +14030,12 @@ function sbHeaders() {
 }
 
 async function sbSelect(table, params) {
+  // Seguridad: nunca solicitar columnas sensibles de `alumnos` desde el cliente.
+  // Si el caller no especifica `select=...`, forzamos columnas seguras.
+  if (table === 'alumnos' && (!params || params.indexOf('select=') === -1)) {
+    var extra = 'select=id,nombre,fecha_reg,primer_acceso';
+    params = params ? (params + '&' + extra) : extra;
+  }
   var qs = params ? '?' + params : '';
   var doReq = function() {
     var ctrl = new AbortController();
