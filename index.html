@@ -14068,17 +14068,14 @@ function buildEjercicioHTML(ej, ejIdx) {
         : '<span style="padding:3px 10px;border-radius:10px;font-size:0.72rem;background:rgba(192,57,43,0.07);color:var(--red);border:1px solid rgba(192,57,43,0.2);">&#x26A0; ' + correctas + '/' + nSubs + ' correctos</span>')
     : '<span style="padding:3px 10px;border-radius:10px;font-size:0.72rem;background:var(--surface2);color:var(--text-muted);border:1px solid var(--border);">' + est.subActual + '/' + nSubs + '</span>';
 
-  // Dots indicadores de progreso (clicables para navegar)
+  // Dots indicadores de progreso (clicables libremente para navegar)
   var dots = subs.map(function(_, di) {
     var res = est.resultados[di];
-    var col  = res === 'ok' ? 'var(--green)' : res === 'ko' ? 'var(--red)' : (di === est.subActual ? 'var(--accent4)' : 'var(--border)');
-    var cursor = (di <= est.subActual || terminado) ? 'pointer' : 'default';
-    var click  = (di <= est.subActual || terminado)
-      ? 'onclick="ejVistaIr(\'' + ej.id + '\',' + di + ')"'
-      : '';
-    var ring   = di === vistaIdx ? 'box-shadow:0 0 0 2px var(--accent4);' : '';
-    return '<div class="ej-prog-dot ' + (res ? 'done' : (di === est.subActual ? 'active' : '')) + '" ' +
-      click + ' style="flex:1;height:6px;border-radius:3px;background:' + col + ';cursor:' + cursor + ';' + ring + '"></div>';
+    var col  = res === 'ok' ? 'var(--green)' : res === 'ko' ? 'var(--red)' : (di === vistaIdx ? 'var(--accent4)' : 'var(--border)');
+    var ring = di === vistaIdx ? 'box-shadow:0 0 0 2px var(--accent4);' : '';
+    return '<div class="ej-prog-dot ' + (res ? 'done' : (di === vistaIdx ? 'active' : '')) + '" ' +
+      'onclick="ejVistaIr(\'' + ej.id + '\',' + di + ')" ' +
+      'style="flex:1;height:6px;border-radius:3px;background:' + col + ';cursor:pointer;' + ring + '"></div>';
   }).join('');
 
   // ── Renderizar SOLO el subenunciado de vistaIdx ─────────────
