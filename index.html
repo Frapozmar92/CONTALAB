@@ -17130,13 +17130,11 @@ function renderTemaReto(num, retoIdxOverride) {
     '<div class="reto-card-body" id="reto-body-' + reto.id + '">';
 
   // ── Vista de una sola operación ─────────────────────────────
-  // Índice de vista: puede ser cualquier operación ya resuelta + la activa
+  // Índice de vista: navegación libre entre operaciones
   if (rst.vistaIdx === undefined) rst.vistaIdx = rst.subActual;
-  // Si el alumno avanzó más allá de la vista, actualizar
-  if (!terminado && rst.vistaIdx > rst.subActual) rst.vistaIdx = rst.subActual;
-  // Si terminado y vistaIdx no está definido, ir a la última
-  if (terminado && rst.vistaIdx === undefined) rst.vistaIdx = nSubs - 1;
-  var vistaIdx = Math.max(0, Math.min(rst.vistaIdx, terminado ? nSubs - 1 : rst.subActual));
+  if (rst.vistaIdx < 0) rst.vistaIdx = 0;
+  if (rst.vistaIdx >= nSubs) rst.vistaIdx = nSubs - 1;
+  var vistaIdx = rst.vistaIdx;
 
   var sub      = subs[vistaIdx];
   var res      = sub ? rst.resultados[vistaIdx] : undefined;
