@@ -11272,20 +11272,35 @@ function cerrarModalProfesor() {
   document.getElementById('prof-modal').style.display = 'none';
 }
 
-function checkProfPwd() {
-  var val = document.getElementById('prof-pwd-input').value;
-  if (val === PROF_PASSWORD_LOCAL) {
+async function checkProfPwd() {
+  var inp = document.getElementById('prof-pwd-input');
+  var errEl = document.getElementById('prof-pwd-error');
+  var val = (inp && inp.value) || '';
+  if (!val) return;
+  if (errEl) errEl.style.display = 'none';
+  try {
+    var fnRes = await fetch(SUPABASE_URL + '/functions/v1/login-profesor', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+      body: JSON.stringify({ password: val })
+    });
+    var fnData = await fnRes.json();
+    if (!fnRes.ok || !fnData.access_token) {
+      if (errEl) errEl.style.display = 'block';
+      if (inp) { inp.value = ''; inp.focus(); }
+      return;
+    }
+    _sbAuthToken    = fnData.access_token;
+    _sbRefreshToken = fnData.refresh_token || null;
+    if (typeof _sbStartTokenRefresh === 'function') _sbStartTokenRefresh();
     profModeActive = true;
     cerrarModalProfesor();
-    // Update nav button
     var btn = document.getElementById('nav-profesor-btn');
     if (btn) { btn.style.color = 'var(--accent4)'; btn.style.borderColor = 'var(--accent4)'; btn.style.background = 'rgba(58,91,191,0.07)'; }
     showPanel('profesor');
     switchProfTab('crear');
-  } else {
-    document.getElementById('prof-pwd-error').style.display = 'block';
-    document.getElementById('prof-pwd-input').value = '';
-    document.getElementById('prof-pwd-input').focus();
+  } catch(e) {
+    if (errEl) { errEl.textContent = 'Error de conexión.'; errEl.style.display = 'block'; }
   }
 }
 
