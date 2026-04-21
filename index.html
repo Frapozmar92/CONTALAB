@@ -14143,7 +14143,7 @@ function buildEjercicioHTML(ej, ejIdx) {
   // Navegación entre subenunciados
   var canPrev = vistaIdx > 0;
   // Puede avanzar si el sub siguiente ya fue resuelto (o si está terminado)
-  var canNext = vistaIdx < nSubs - 1 && (terminado || vistaIdx + 1 <= est.subActual);
+  var canNext = vistaIdx < nSubs - 1;
 
   var navHTML =
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;">' +
