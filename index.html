@@ -17784,42 +17784,41 @@ function renderAsientoFilasReto(filas) {
   var arr = (filas||[]).filter(function(f){ return f.cuenta; });
   if (!arr.length) return '';
   if (modo === 'diario') {
-    // Libro diario clásico: cada cuenta del Debe en su línea, con el importe
-    // individual a la izquierda. La última línea del Debe enlaza con "a" y la
-    // primera cuenta del Haber. Haberes adicionales en líneas indentadas.
+    // Libro diario clásico en dos columnas: Debe a la izquierda, Haber a la derecha.
+    // Una sola "a" en cursiva precede a la primera cuenta del Haber.
     var debes   = arr.filter(function(f){ return f.tipo === 'debe';  });
     var haberes = arr.filter(function(f){ return f.tipo === 'haber'; });
-    function _imp(f) { return parseFloat(f.debe)||parseFloat(f.haber)||0; }
+    function _imp(f)  { return parseFloat(f.debe)||parseFloat(f.haber)||0; }
     function _impD(v) { return '<span style="color:var(--debe);font-weight:700;font-family:\'IBM Plex Mono\',monospace;">' + fmt(v) + '</span>'; }
     function _impH(v) { return '<span style="color:var(--haber);font-weight:700;font-family:\'IBM Plex Mono\',monospace;">' + fmt(v) + '</span>'; }
     function _cta(f)  {
       return '<span style="color:var(--accent);font-family:\'IBM Plex Mono\',monospace;">(' + (f.cuenta||'') + ')</span> ' +
              '<span style="color:var(--text);">' + (f.nombre||'') + '</span>';
     }
-    var sepA = '<span style="color:var(--accent3);font-style:italic;font-weight:600;margin:0 10px;">a</span>';
-    var html = '<div style="padding:14px 18px;font-size:0.92rem;line-height:2;border-bottom:1px solid var(--border);text-align:center;">';
 
-    if (debes.length) {
-      debes.forEach(function(f, i) {
-        var linea = _impD(_imp(f)) + ' ' + _cta(f);
-        if (i === debes.length - 1 && haberes.length) {
-          var h0 = haberes[0];
-          linea += sepA + _cta(h0) + ' ' + _impH(_imp(h0));
-        }
-        html += '<div>' + linea + '</div>';
-      });
-      // Haberes adicionales (si hay más de uno)
-      haberes.slice(1).forEach(function(hf) {
-        html += '<div style="padding-left:3em;">' + _cta(hf) + ' ' + _impH(_imp(hf)) + '</div>';
-      });
-    } else if (haberes.length) {
-      // Caso atípico: sólo haber
-      haberes.forEach(function(hf) {
-        html += '<div>' + sepA + _cta(hf) + ' ' + _impH(_imp(hf)) + '</div>';
-      });
-    }
-    html += '</div>';
-    return html;
+    var debeLines = debes.map(function(f) {
+      return '<div style="display:flex;align-items:baseline;gap:10px;">' +
+               '<span style="flex-shrink:0;">' + _impD(_imp(f)) + '</span>' +
+               '<span>' + _cta(f) + '</span>' +
+             '</div>';
+    }).join('');
+
+    var haberLines = haberes.map(function(f, i) {
+      var pref = i === 0
+        ? '<span style="color:var(--accent3);font-style:italic;font-weight:600;margin-right:8px;">a</span>'
+        : '<span style="display:inline-block;width:1.2em;"></span>';
+      return '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;">' +
+               '<span>' + pref + _cta(f) + '</span>' +
+               '<span style="flex-shrink:0;">' + _impH(_imp(f)) + '</span>' +
+             '</div>';
+    }).join('');
+
+    return '<div style="padding:16px 20px;border-bottom:1px solid var(--border);">' +
+             '<div style="max-width:860px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:24px;font-size:0.86rem;line-height:1.9;">' +
+               '<div style="text-align:left;">' + debeLines + '</div>' +
+               '<div style="text-align:left;">' + haberLines + '</div>' +
+             '</div>' +
+           '</div>';
   }
   // Modo tabla (actual)
   var html = '';
