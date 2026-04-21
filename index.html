@@ -17226,15 +17226,7 @@ function renderTemaReto(num, retoIdxOverride) {
           if (asientosDef3.length > 1) {
             html += '<div style="padding:5px 12px;background:var(--surface2);border-bottom:1px solid var(--border);font-family:\'IBM Plex Mono\',monospace;font-size:0.58rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;">▸ Asiento ' + (ai+1) + '</div>';
           }
-          (ua||[]).filter(function(f){ return f.cuenta; }).forEach(function(f) {
-            var isD = f.tipo === 'debe';
-            html += '<div style="display:flex;gap:10px;align-items:center;padding:5px 12px;border-bottom:1px solid var(--border);border-left:3px solid ' + (isD?'var(--debe)':'var(--haber)') + ';">' +
-              '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.62rem;font-weight:700;color:' + (isD?'var(--debe)':'var(--haber)') + ';min-width:14px;">' + (isD?'D':'H') + '</span>' +
-              '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.7rem;color:var(--accent);min-width:38px;">' + (f.cuenta||'') + '</span>' +
-              '<span style="font-size:0.78rem;flex:1;color:var(--text);">' + (f.nombre||'') + '</span>' +
-              '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.72rem;color:var(--text-muted);">' + fmt(parseFloat(f.debe||0) || parseFloat(f.haber||0)) + '</span>' +
-            '</div>';
-          });
+          html += renderAsientoFilasReto(ua||[]);
         });
       } else {
         html += '<div style="padding:10px 12px;font-size:0.78rem;color:var(--text-dim);font-style:italic;">Respuesta no disponible</div>';
