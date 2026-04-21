@@ -14458,11 +14458,17 @@ function confirmarSubenunciado(ejId, si) {
                        fecha: fechasAsientos[0] || '',   // legacy: primera fecha
                        fechas: fechasAsientos };          // array completo
   est.resultados[si] = ok ? 'ok' : 'ko';
-  est.subActual = si + 1;
-  // Avanzar la vista al siguiente subenunciado
+  est.subActual = Math.max(est.subActual || 0, si + 1);
+  // Avanzar la vista al siguiente subenunciado no resuelto (o al siguiente si no hay)
   if (!window._ejVista) window._ejVista = {};
   var _nSubs = ej ? (ej.subenunciados||[]).length : 0;
-  window._ejVista[ejId] = (si + 1 < _nSubs) ? si + 1 : si;
+  var nextIdx = si + 1;
+  // Buscar el siguiente sub sin resolver
+  for (var _i = 0; _i < _nSubs; _i++) {
+    var _cand = (si + 1 + _i) % _nSubs;
+    if (!est.resultados[_cand]) { nextIdx = _cand; break; }
+  }
+  window._ejVista[ejId] = (nextIdx < _nSubs) ? nextIdx : si;
 
   if (ok) { }
   else     { }
