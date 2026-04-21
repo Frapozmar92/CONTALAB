@@ -17144,7 +17144,7 @@ function renderTemaReto(num, retoIdxOverride) {
   var sub      = subs[vistaIdx];
   var res      = sub ? rst.resultados[vistaIdx] : undefined;
   var resuelta = res !== undefined;
-  var esActual = vistaIdx === rst.subActual && !terminado;
+  var esActual = !resuelta && !terminado;
 
   // ── Dots de operaciones (clicables para navegar) ─────────────
   var opDots = subs.map(function(s, si) {
