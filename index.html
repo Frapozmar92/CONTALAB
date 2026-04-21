@@ -14052,8 +14052,9 @@ function buildEjercicioHTML(ej, ejIdx) {
     window._ejVista[ej.id] = est.subActual < nSubs ? est.subActual : nSubs - 1;
   }
   var vistaIdx = window._ejVista[ej.id];
-  // Impedir ir a subenunciados aún bloqueados (futuros no resueltos)
-  if (!terminado && vistaIdx > est.subActual) vistaIdx = est.subActual;
+  // Navegación libre: el alumno puede saltar a cualquier subenunciado sin completar los anteriores.
+  if (vistaIdx < 0) vistaIdx = 0;
+  if (vistaIdx >= nSubs) vistaIdx = nSubs - 1;
   window._ejVista[ej.id] = vistaIdx;
 
   var tagsHtml = (ej.tags||[]).map(function(t){
