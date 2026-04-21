@@ -11248,7 +11248,9 @@ function guardarExamenProf() {
 // ============================================================
 // MODO PROFESOR
 // ============================================================
-var PROF_PASSWORD_LOCAL = 'profesor2024';
+// NOTA DE SEGURIDAD: la contraseña del profesor NO se almacena ni verifica en
+// cliente. Toda verificación pasa por la Edge Function `login-profesor` que
+// devuelve un JWT real. checkProfPwd() la llama por red.
 var profModeActive = false;
 // state.ejerciciosProfesor = [ { id, intro, tema, nivel, tags, subenunciados:[{texto,pista,solucion}], fechaCreacion } ]
 // state.respuestasAlumno   = [ { ejId, alumnoId, subRespuestas:[{subIdx,asiento}], asiento(legacy), fecha, evaluacion, comentario } ]var profEditingId = null;
