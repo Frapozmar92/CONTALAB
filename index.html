@@ -17767,6 +17767,68 @@ function updateRetoBal2(rowId) {
   }
 }
 
+// ── Vista de asientos en retos (tabla ↔ diario clásico) ──────
+if (typeof window._retoVistaModo === 'undefined') window._retoVistaModo = 'tabla';
+
+function setRetoVistaModo(modo, num, idx) {
+  window._retoVistaModo = (modo === 'diario') ? 'diario' : 'tabla';
+  try { localStorage.setItem('retoVistaModo', window._retoVistaModo); } catch(e) {}
+  if (typeof num !== 'undefined') renderTemaReto(num, idx);
+}
+try {
+  var _rm = localStorage.getItem('retoVistaModo');
+  if (_rm === 'diario' || _rm === 'tabla') window._retoVistaModo = _rm;
+} catch(e) {}
+
+// Render de las filas de un asiento según modo de vista
+function renderAsientoFilasReto(filas) {
+  var modo = window._retoVistaModo || 'tabla';
+  var arr = (filas||[]).filter(function(f){ return f.cuenta; });
+  if (!arr.length) return '';
+  if (modo === 'diario') {
+    // Libro diario clásico: importe DEBE | Nº+denominación | importe HABER
+    // Las cuentas del Haber llevan "a " como prefijo e indentación
+    var html = '<div style="display:grid;grid-template-columns:110px 1fr 110px;gap:0;font-family:\'IBM Plex Mono\',monospace;font-size:0.78rem;">';
+    arr.forEach(function(f, i) {
+      var isD = f.tipo === 'debe';
+      var imp = parseFloat(f.debe||0) || parseFloat(f.haber||0);
+      var celDebe  = isD ? '<div style="padding:6px 10px;text-align:right;border-bottom:1px solid var(--border);color:var(--debe);font-weight:600;">' + fmt(imp) + '</div>' : '<div style="padding:6px 10px;border-bottom:1px solid var(--border);"></div>';
+      var celMid   = '<div style="padding:6px 10px;border-bottom:1px solid var(--border);' + (!isD ? 'padding-left:28px;color:var(--text-muted);' : 'color:var(--text);') + 'font-size:0.78rem;font-family:inherit;">' +
+                       (!isD ? '<span style="color:var(--haber);font-style:italic;margin-right:6px;">a</span>' : '') +
+                       '<span style="color:var(--accent);margin-right:8px;">' + (f.cuenta||'') + '</span>' +
+                       '<span>' + (f.nombre||'') + '</span>' +
+                     '</div>';
+      var celHaber = !isD ? '<div style="padding:6px 10px;text-align:right;border-bottom:1px solid var(--border);color:var(--haber);font-weight:600;">' + fmt(imp) + '</div>' : '<div style="padding:6px 10px;border-bottom:1px solid var(--border);"></div>';
+      html += celDebe + celMid + celHaber;
+    });
+    html += '</div>';
+    return html;
+  }
+  // Modo tabla (actual)
+  var html = '';
+  arr.forEach(function(f) {
+    var isD = f.tipo === 'debe';
+    var imp = parseFloat(f.debe||0) || parseFloat(f.haber||0);
+    html += '<div style="display:flex;gap:10px;align-items:center;padding:5px 12px;border-bottom:1px solid var(--border);border-left:3px solid ' + (isD?'var(--debe)':'var(--haber)') + ';">' +
+      '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.62rem;font-weight:700;color:' + (isD?'var(--debe)':'var(--haber)') + ';min-width:14px;">' + (isD?'D':'H') + '</span>' +
+      '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.7rem;color:var(--accent);min-width:38px;">' + (f.cuenta||'') + '</span>' +
+      '<span style="font-size:0.78rem;flex:1;color:var(--text);">' + (f.nombre||'') + '</span>' +
+      '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.72rem;color:var(--text-muted);">' + fmt(imp) + '</span>' +
+    '</div>';
+  });
+  return html;
+}
+
+// Render de filas de solución (que vienen con f.debe/f.haber numéricos)
+function renderAsientoSolucionReto(solucion) {
+  var filas = (solucion||[]).map(function(f) {
+    return { tipo: f.tipo, cuenta: f.cuenta, nombre: f.nombre,
+             debe:  f.tipo === 'debe'  ? f.debe  : 0,
+             haber: f.tipo === 'haber' ? f.haber : 0 };
+  });
+  return renderAsientoFilasReto(filas);
+}
+
 // ── Comprobar operación del reto ──────────────────────────────
 function confirmarRetoOp(retoId, si) {
   var reto = (state.ejerciciosProfesor||[]).find(function(e){ return String(e.id) === String(retoId); });
