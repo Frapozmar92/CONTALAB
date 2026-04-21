@@ -17833,8 +17833,15 @@ function confirmarRetoOp(retoId, si) {
 
   if (ok) { }
   else    { }
-  rst.subActual  = si + 1;
-  rst.vistaIdx   = si + 1 < (reto.subenunciados||[]).length ? si + 1 : si;
+  rst.subActual = Math.max(rst.subActual || 0, si + 1);
+  // Vista: siguiente operación sin resolver
+  var _nR = (reto.subenunciados||[]).length;
+  var _nextR = si + 1;
+  for (var _iR = 0; _iR < _nR; _iR++) {
+    var _cR = (si + 1 + _iR) % _nR;
+    if (!rst.resultados[_cR]) { _nextR = _cR; break; }
+  }
+  rst.vistaIdx = _nextR < _nR ? _nextR : si;
   updateStats();
   autoGuardarProgreso();
 
