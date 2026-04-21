@@ -14310,6 +14310,8 @@ async function registrarAlumno() {
 }
 
 // ── LOGIN ALUMNO ─────────────────────────────────────────────
+// Autenticación 100% vía Edge Function: el cliente NO lee `alumnos` con anon
+// ni compara hashes en JS. Toda verificación ocurre en el servidor.
 async function loginAlumno() {
   hideLoginErrors();
   var nombre = document.getElementById('l-nombre').value.trim();
@@ -14319,52 +14321,46 @@ async function loginAlumno() {
 
   showLoading('Iniciando sesión…');
   try {
-    var rows = await sbSelect('alumnos', 'nombre=ilike.' + encodeURIComponent(nombre));
-    if (!rows.length) {
+    var fnRes = await fetch(SUPABASE_URL + '/functions/v1/login-alumno', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+      body: JSON.stringify({ nombre: nombre, password: pwd })
+    });
+    var fnData = await fnRes.json();
+
+    if (fnRes.status === 404) {
       hideLoading();
       showLoginError('l-error-alumno', 'No se encontró ningún alumno con ese nombre. ¿Te has registrado?');
       return;
     }
-    var alumno = rows[0];
-
-    // Primer acceso: no tiene contraseña todavía
-    if (alumno.primer_acceso && !alumno.pwd_hash) {
-      hideLoading();
-      _alumnoActualEnDB = alumno;
-      mostrarModalCambiarPassword();
-      return;
-    }
-
-    var hash = await hashPwd(pwd);
-    if (hash !== alumno.pwd_hash) {
+    if (fnRes.status === 401) {
       hideLoading();
       showLoginError('l-error-alumno', 'Contraseña incorrecta.');
       return;
     }
 
-    // Si primer_acceso todavía true (llegó aquí de alguna forma), forzar cambio
-    if (alumno.primer_acceso) {
+    // Primer acceso pendiente (alumno sin pwd_hash)
+    if (fnData && fnData.primer_acceso && fnData.alumno) {
       hideLoading();
-      _alumnoActualEnDB = alumno;
+      _alumnoActualEnDB = fnData.alumno;
       mostrarModalCambiarPassword();
       return;
     }
 
-    // Migrar / autenticar con Supabase Auth (transparente para el alumno)
-    await _loginAlumnoConAuth(alumno, pwd);
-    await cargarYEntrarAlumno(alumno);
+    if (!fnRes.ok || !fnData.access_token || !fnData.alumno) {
+      hideLoading();
+      showLoginError('l-error-alumno', (fnData && fnData.error) || 'Error de autenticación.');
+      return;
+    }
+
+    _sbAuthToken    = fnData.access_token;
+    _sbRefreshToken = fnData.refresh_token || null;
+    _sbStartTokenRefresh();
+
+    await cargarYEntrarAlumno(fnData.alumno);
   } catch(e) {
     hideLoading();
-    var cachedAlumnos = lsGet('cache_alumnos') || [];
-    var alumnoCache = cachedAlumnos.find(function(a){ return a.nombre && a.nombre.toLowerCase() === nombre.toLowerCase(); });
-    if (alumnoCache) {
-      hashPwd(pwd).then(function(hash) {
-        if (hash === alumnoCache.pwd_hash) { cargarYEntrarAlumno(alumnoCache); }
-        else { showLoginError('l-error-alumno', 'Contraseña incorrecta.'); }
-      });
-    } else {
-      showLoginError('l-error-alumno', 'Sin conexión y sin datos locales. Conéctate a internet para el primer acceso.');
-    }
+    showLoginError('l-error-alumno', 'Error de conexión. Conéctate a internet para iniciar sesión.');
   }
 }
 
