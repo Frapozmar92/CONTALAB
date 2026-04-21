@@ -14203,9 +14203,8 @@ function ejVistaIr(ejId, idx) {
   if (!ej) return;
   var nSubs = (ej.subenunciados||[]).length;
   var terminado = est && est.subActual >= nSubs && est.resultados.length >= nSubs;
-  // Solo permitir ir a subenunciados ya resueltos (o el activo)
+  // Navegación libre entre subenunciados
   if (idx < 0 || idx >= nSubs) return;
-  if (!terminado && idx > (est ? est.subActual : 0)) return;
   window._ejVista[ejId] = idx;
   // Re-renderizar el ejercicio
   var tKey = ej.tema || '';
