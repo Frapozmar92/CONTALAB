@@ -17053,7 +17053,12 @@ function renderTemaReto(num, retoIdxOverride) {
   var subs  = reto.subenunciados || [];
   var nSubs = subs.length;
   var correctas = (rst.resultados||[]).filter(function(r){ return r==='ok'; }).length;
-  var terminado = rst.resultados.length >= nSubs && nSubs > 0;
+  function _todosRet(arr, n) {
+    if (n <= 0) return false;
+    for (var i = 0; i < n; i++) { if (!arr[i]) return false; }
+    return true;
+  }
+  var terminado = _todosRet(rst.resultados||[], nSubs);
 
   // ── Estado de cada reto para los dots del paginador ──────────
   function getRetoDotCls(r, i) {
@@ -17061,7 +17066,7 @@ function renderTemaReto(num, retoIdxOverride) {
     var rs = retoState[r.id];
     var ns = (r.subenunciados||[]).length;
     var ok = (rs.resultados||[]).filter(function(x){ return x==='ok'; }).length;
-    var term = rs.resultados.length >= ns && ns > 0;
+    var term = _todosRet(rs.resultados||[], ns);
     var cls = i === idx ? ' activo' : '';
     if (term) return (ok === ns ? 'ok' : 'ko') + cls;
     if (rs.subActual > 0) return 'en-progreso' + cls;
