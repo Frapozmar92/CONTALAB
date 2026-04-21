@@ -17179,8 +17179,11 @@ function renderTemaReto(num, retoIdxOverride) {
       }
       html += '</div>';
 
-      // Solución — solo si incorrecto
+      // Feedback granular + solución — solo si incorrecto
       if (!esOk) {
+        var _diagReto = diagnosticarSubenunciado(userAsientos, sub);
+        var _granReto = buildFeedbackGranular(_diagReto, asientosDef3.length > 1);
+        if (_granReto) html += _granReto;
         var todasSols = [normalizarAsientos(sub)].concat(sub.alternativas || []);
         html += '<div style="border:1px solid rgba(0,0,0,0.08);border-radius:8px;overflow:hidden;margin-bottom:8px;">' +
           '<div style="padding:6px 12px;background:var(--surface2);border-bottom:1px solid var(--border);">' +
