@@ -17149,10 +17149,8 @@ function renderTemaReto(num, retoIdxOverride) {
     if (r2 === 'ok')            cls += ' ok';
     else if (r2 === 'ko')       cls += ' ko';
     else if (si === rst.subActual && !terminado) cls += ' activo';
-    else if (si > rst.subActual) cls += ' bloqueado';
-    // Clicable: operaciones ya resueltas (si < subActual), la activa (si === subActual) o todas si terminado
-    var puedeIr = terminado || si <= rst.subActual;
-    var clickable = puedeIr ? 'onclick="retoVistaIr(\'' + reto.id + '\',' + num + ',' + si + ')" style="cursor:pointer;"' : '';
+    // Navegación libre: todas las operaciones son clicables
+    var clickable = 'onclick="retoVistaIr(\'' + reto.id + '\',' + num + ',' + si + ')" style="cursor:pointer;"';
     return '<div class="reto-op-dot' + cls + '" ' + clickable + ' title="Operación ' + (si+1) + '"></div>';
   }).join('');
 
