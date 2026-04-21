@@ -17790,8 +17790,8 @@ function renderAsientoFilasReto(filas) {
     var debes   = arr.filter(function(f){ return f.tipo === 'debe';  });
     var haberes = arr.filter(function(f){ return f.tipo === 'haber'; });
     function _imp(f) { return parseFloat(f.debe)||parseFloat(f.haber)||0; }
-    function _impD(v) { return '<span style="color:var(--debe);font-weight:700;font-family:\'IBM Plex Mono\',monospace;">' + fmt(v) + ' €</span>'; }
-    function _impH(v) { return '<span style="color:var(--haber);font-weight:700;font-family:\'IBM Plex Mono\',monospace;">' + fmt(v) + ' €</span>'; }
+    function _impD(v) { return '<span style="color:var(--debe);font-weight:700;font-family:\'IBM Plex Mono\',monospace;">' + fmt(v) + '</span>'; }
+    function _impH(v) { return '<span style="color:var(--haber);font-weight:700;font-family:\'IBM Plex Mono\',monospace;">' + fmt(v) + '</span>'; }
     function _cta(f)  {
       return '<span style="color:var(--accent);font-family:\'IBM Plex Mono\',monospace;">(' + (f.cuenta||'') + ')</span> ' +
              '<span style="color:var(--text);">' + (f.nombre||'') + '</span>';
