@@ -14065,7 +14065,13 @@ function buildEjercicioHTML(ej, ejIdx) {
       return fBadge +
         _buildAsientoVista(ua || [], etq || (f ? f : ''));
     }).join('');
-    var solHTML = res === 'ko' ? buildSolAsientosHTML(sub) : '';
+    var solHTML = '';
+    if (res === 'ko') {
+      // Feedback granular: diagnóstico detallado de errores por asiento
+      var _diagArr = diagnosticarSubenunciado(userAsientos, sub);
+      var _granHTML = buildFeedbackGranular(_diagArr, asientosDef2.length > 1);
+      solHTML = _granHTML + buildSolAsientosHTML(sub);
+    }
     var resColor = res === 'ok' ? 'rgba(46,139,110,0.25)' : 'rgba(192,57,43,0.2)';
     // Botón para reintentar solo este subenunciado
     var resetSubBtn =
