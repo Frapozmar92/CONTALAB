@@ -17159,6 +17159,17 @@ function renderTemaReto(num, retoIdxOverride) {
     return '<div class="reto-op-dot' + cls + '" ' + clickable + ' title="Operación ' + (si+1) + '"></div>';
   }).join('');
 
+  // ── Toggle de vista: tabla ↔ diario clásico ──────────────────
+  var _vmodo = window._retoVistaModo || 'tabla';
+  html +=
+    '<div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;padding:6px 0 0;">' +
+      '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Vista</span>' +
+      '<button class="btn btn-sm ' + (_vmodo==='tabla'?'btn-primary':'btn-outline') + '" style="font-size:0.68rem;padding:3px 10px;" ' +
+        'onclick="setRetoVistaModo(\'tabla\',' + num + ',' + idx + ')">Tabla</button>' +
+      '<button class="btn btn-sm ' + (_vmodo==='diario'?'btn-primary':'btn-outline') + '" style="font-size:0.68rem;padding:3px 10px;" ' +
+        'onclick="setRetoVistaModo(\'diario\',' + num + ',' + idx + ')">Diario</button>' +
+    '</div>';
+
   // ── Cabecera de navegación: flechas + dots + contador ────────
   var canPrevOp = vistaIdx > 0;
   // Navegación libre
