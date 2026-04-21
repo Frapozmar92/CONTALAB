@@ -2570,6 +2570,59 @@ body {
   animation: drawCheck .6s ease-out forwards .1s;
 }
 @keyframes drawCheck { to { stroke-dashoffset: 0; } }
+
+/* ── GLOSARIO INLINE (hover sobre términos contables) ── */
+.gloss {
+  position: relative;
+  border-bottom: 1px dotted var(--accent4);
+  cursor: help;
+  color: inherit;
+}
+.gloss::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%) translateY(4px);
+  width: max-content;
+  max-width: 320px;
+  padding: 10px 14px;
+  background: var(--text);
+  color: var(--bg);
+  border-radius: 6px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-transform: none;
+  text-align: left;
+  box-shadow: 0 10px 30px rgba(20,16,10,0.22);
+  white-space: normal;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease, transform 140ms ease;
+  z-index: 9999;
+}
+.gloss::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 3px);
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--text);
+  opacity: 0;
+  transition: opacity 140ms ease;
+  z-index: 10000;
+  pointer-events: none;
+}
+.gloss:hover::after, .gloss:focus::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.gloss:hover::before, .gloss:focus::before { opacity: 1; }
+.gloss:focus { outline: none; }
 </style>
 <script>
 window.XLSX = window.XLSX || {
