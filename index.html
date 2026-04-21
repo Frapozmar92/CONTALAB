@@ -14080,9 +14080,10 @@ function buildEjercicioHTML(ej, ejIdx) {
 
   // ── Renderizar SOLO el subenunciado de vistaIdx ─────────────
   var sub     = subs[vistaIdx];
-  var isActivo = vistaIdx === est.subActual && !terminado;
   var res      = est.resultados[vistaIdx];
-  var isResuelto = vistaIdx < est.subActual || (terminado && vistaIdx < nSubs);
+  // Resuelto: ya confirmado (ok o ko). Activo: todavía sin respuesta y ejercicio no cerrado.
+  var isResuelto = (res === 'ok' || res === 'ko');
+  var isActivo   = !isResuelto && !terminado;
 
   var subBodyHTML = '';
 
