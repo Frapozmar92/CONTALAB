@@ -17784,25 +17784,42 @@ function renderAsientoFilasReto(filas) {
   var arr = (filas||[]).filter(function(f){ return f.cuenta; });
   if (!arr.length) return '';
   if (modo === 'diario') {
-    // Libro diario clásico en línea:
-    // 1.000€ (572) Bancos  a  (570) Caja 1.000€
-    var debes  = arr.filter(function(f){ return f.tipo === 'debe';  });
+    // Libro diario clásico: cada cuenta del Debe en su línea, con el importe
+    // individual a la izquierda. La última línea del Debe enlaza con "a" y la
+    // primera cuenta del Haber. Haberes adicionales en líneas indentadas.
+    var debes   = arr.filter(function(f){ return f.tipo === 'debe';  });
     var haberes = arr.filter(function(f){ return f.tipo === 'haber'; });
-    var totalD = debes.reduce(function(s,f){ return s + (parseFloat(f.debe)||parseFloat(f.haber)||0); }, 0);
-    var totalH = haberes.reduce(function(s,f){ return s + (parseFloat(f.debe)||parseFloat(f.haber)||0); }, 0);
-    function _cuentaLbl(f) {
+    function _imp(f) { return parseFloat(f.debe)||parseFloat(f.haber)||0; }
+    function _impD(v) { return '<span style="color:var(--debe);font-weight:700;font-family:\'IBM Plex Mono\',monospace;">' + fmt(v) + ' €</span>'; }
+    function _impH(v) { return '<span style="color:var(--haber);font-weight:700;font-family:\'IBM Plex Mono\',monospace;">' + fmt(v) + ' €</span>'; }
+    function _cta(f)  {
       return '<span style="color:var(--accent);font-family:\'IBM Plex Mono\',monospace;">(' + (f.cuenta||'') + ')</span> ' +
              '<span style="color:var(--text);">' + (f.nombre||'') + '</span>';
     }
-    function _cuentasSide(list) {
-      return list.map(_cuentaLbl).join('<span style="color:var(--text-muted);margin:0 4px;">,</span> ');
-    }
-    var impD = '<span style="color:var(--debe);font-weight:700;font-family:\'IBM Plex Mono\',monospace;">' + fmt(totalD) + ' €</span>';
-    var impH = '<span style="color:var(--haber);font-weight:700;font-family:\'IBM Plex Mono\',monospace;">' + fmt(totalH) + ' €</span>';
     var sepA = '<span style="color:var(--accent3);font-style:italic;font-weight:600;margin:0 10px;">a</span>';
-    return '<div style="padding:14px 18px;font-size:0.92rem;line-height:1.8;border-bottom:1px solid var(--border);">' +
-             impD + ' ' + _cuentasSide(debes) + sepA + _cuentasSide(haberes) + ' ' + impH +
-           '</div>';
+    var html = '<div style="padding:14px 18px;font-size:0.92rem;line-height:2;border-bottom:1px solid var(--border);">';
+
+    if (debes.length) {
+      debes.forEach(function(f, i) {
+        var linea = _impD(_imp(f)) + ' ' + _cta(f);
+        if (i === debes.length - 1 && haberes.length) {
+          var h0 = haberes[0];
+          linea += sepA + _cta(h0) + ' ' + _impH(_imp(h0));
+        }
+        html += '<div>' + linea + '</div>';
+      });
+      // Haberes adicionales (si hay más de uno)
+      haberes.slice(1).forEach(function(hf) {
+        html += '<div style="padding-left:3em;">' + _cta(hf) + ' ' + _impH(_imp(hf)) + '</div>';
+      });
+    } else if (haberes.length) {
+      // Caso atípico: sólo haber
+      haberes.forEach(function(hf) {
+        html += '<div>' + sepA + _cta(hf) + ' ' + _impH(_imp(hf)) + '</div>';
+      });
+    }
+    html += '</div>';
+    return html;
   }
   // Modo tabla (actual)
   var html = '';
