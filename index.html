@@ -17784,23 +17784,25 @@ function renderAsientoFilasReto(filas) {
   var arr = (filas||[]).filter(function(f){ return f.cuenta; });
   if (!arr.length) return '';
   if (modo === 'diario') {
-    // Libro diario clásico: importe DEBE | Nº+denominación | importe HABER
-    // Las cuentas del Haber llevan "a " como prefijo e indentación
-    var html = '<div style="display:grid;grid-template-columns:110px 1fr 110px;gap:0;font-family:\'IBM Plex Mono\',monospace;font-size:0.78rem;">';
-    arr.forEach(function(f, i) {
-      var isD = f.tipo === 'debe';
-      var imp = parseFloat(f.debe||0) || parseFloat(f.haber||0);
-      var celDebe  = isD ? '<div style="padding:6px 10px;text-align:right;border-bottom:1px solid var(--border);color:var(--debe);font-weight:600;">' + fmt(imp) + '</div>' : '<div style="padding:6px 10px;border-bottom:1px solid var(--border);"></div>';
-      var celMid   = '<div style="padding:6px 10px;border-bottom:1px solid var(--border);' + (!isD ? 'padding-left:28px;color:var(--text-muted);' : 'color:var(--text);') + 'font-size:0.78rem;font-family:inherit;">' +
-                       (!isD ? '<span style="color:var(--haber);font-style:italic;margin-right:6px;">a</span>' : '') +
-                       '<span style="color:var(--accent);margin-right:8px;">' + (f.cuenta||'') + '</span>' +
-                       '<span>' + (f.nombre||'') + '</span>' +
-                     '</div>';
-      var celHaber = !isD ? '<div style="padding:6px 10px;text-align:right;border-bottom:1px solid var(--border);color:var(--haber);font-weight:600;">' + fmt(imp) + '</div>' : '<div style="padding:6px 10px;border-bottom:1px solid var(--border);"></div>';
-      html += celDebe + celMid + celHaber;
-    });
-    html += '</div>';
-    return html;
+    // Libro diario clásico en línea:
+    // 1.000€ (572) Bancos  a  (570) Caja 1.000€
+    var debes  = arr.filter(function(f){ return f.tipo === 'debe';  });
+    var haberes = arr.filter(function(f){ return f.tipo === 'haber'; });
+    var totalD = debes.reduce(function(s,f){ return s + (parseFloat(f.debe)||parseFloat(f.haber)||0); }, 0);
+    var totalH = haberes.reduce(function(s,f){ return s + (parseFloat(f.debe)||parseFloat(f.haber)||0); }, 0);
+    function _cuentaLbl(f) {
+      return '<span style="color:var(--accent);font-family:\'IBM Plex Mono\',monospace;">(' + (f.cuenta||'') + ')</span> ' +
+             '<span style="color:var(--text);">' + (f.nombre||'') + '</span>';
+    }
+    function _cuentasSide(list) {
+      return list.map(_cuentaLbl).join('<span style="color:var(--text-muted);margin:0 4px;">,</span> ');
+    }
+    var impD = '<span style="color:var(--debe);font-weight:700;font-family:\'IBM Plex Mono\',monospace;">' + fmt(totalD) + ' €</span>';
+    var impH = '<span style="color:var(--haber);font-weight:700;font-family:\'IBM Plex Mono\',monospace;">' + fmt(totalH) + ' €</span>';
+    var sepA = '<span style="color:var(--accent3);font-style:italic;font-weight:600;margin:0 10px;">a</span>';
+    return '<div style="padding:14px 18px;font-size:0.92rem;line-height:1.8;border-bottom:1px solid var(--border);">' +
+             impD + ' ' + _cuentasSide(debes) + sepA + _cuentasSide(haberes) + ' ' + impH +
+           '</div>';
   }
   // Modo tabla (actual)
   var html = '';
