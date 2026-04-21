@@ -17156,8 +17156,8 @@ function renderTemaReto(num, retoIdxOverride) {
 
   // ── Cabecera de navegación: flechas + dots + contador ────────
   var canPrevOp = vistaIdx > 0;
-  // Avanzar: a operaciones ya resueltas (vistaIdx < subActual) o si está terminado
-  var canNextOp = vistaIdx < nSubs - 1 && (terminado || vistaIdx < rst.subActual);
+  // Navegación libre
+  var canNextOp = vistaIdx < nSubs - 1;
   html +=
     '<div style="display:flex;align-items:center;gap:10px;padding:12px 0 14px;border-top:1px solid var(--border);margin-top:4px;">' +
       '<button class="btn btn-outline btn-sm" ' + (!canPrevOp ? 'disabled style="opacity:0.3"' : 'onclick="retoVistaIr(\'' + reto.id + '\',' + num + ',' + (vistaIdx-1) + ')"') + '>&#x2190;</button>' +
