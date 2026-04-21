@@ -17244,15 +17244,7 @@ function renderTemaReto(num, retoIdxOverride) {
             '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.58rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);font-weight:700;">📋 Solución correcta</span>' +
           '</div>';
         todasSols[0].forEach(function(a) {
-          (a.solucion||[]).forEach(function(f) {
-            var isD = f.tipo === 'debe';
-            html += '<div style="display:flex;gap:10px;align-items:center;padding:5px 12px;border-bottom:1px solid var(--border);border-left:3px solid ' + (isD?'var(--debe)':'var(--haber)') + ';">' +
-              '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.62rem;font-weight:700;color:' + (isD?'var(--debe)':'var(--haber)') + ';min-width:14px;">' + (isD?'D':'H') + '</span>' +
-              '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.7rem;color:var(--accent);min-width:38px;">' + f.cuenta + '</span>' +
-              '<span style="font-size:0.78rem;flex:1;color:var(--text);">' + f.nombre + '</span>' +
-              '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.72rem;color:var(--text-muted);">' + fmt(f.debe || f.haber) + '</span>' +
-            '</div>';
-          });
+          html += renderAsientoSolucionReto(a.solucion||[]);
         });
         html += '</div>';
       }
