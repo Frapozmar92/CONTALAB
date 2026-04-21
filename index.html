@@ -14028,7 +14028,18 @@ async function sbSelect(table, params) {
     }
     if (!r.ok) throw new Error('sbSelect ' + table + ' ' + r.status);
     var data = await r.json();
-    lsSet('cache_' + table, data);
+    // Sanitizar cache de alumnos: nunca guardar hashes/credenciales en localStorage
+    var dataToCache = data;
+    if (table === 'alumnos' && Array.isArray(data)) {
+      dataToCache = data.map(function(a){
+        var copy = Object.assign({}, a);
+        delete copy.pwd_hash;
+        delete copy.supabase_uid;
+        delete copy.email;
+        return copy;
+      });
+    }
+    lsSet('cache_' + table, dataToCache);
     return data;
   } catch(e) {
     var cached = lsGet('cache_' + table);
