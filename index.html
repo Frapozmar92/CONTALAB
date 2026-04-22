@@ -14185,6 +14185,19 @@ function buildEjercicioHTML(ej, ejIdx) {
       '<div class="ej-prof-intro">' + (ej.intro||'') + '</div>' +
       // Barra de dots
       '<div style="display:flex;gap:4px;margin-top:12px;">' + dots + '</div>' +
+      // Toggle de vista: tabla ↔ diario clásico (reutiliza el modo global de retos)
+      (function() {
+        var _vmodo = window._retoVistaModo || 'tabla';
+        var _sT = 'padding:2px 8px;border:1px solid var(--accent4);border-radius:4px;cursor:pointer;font-size:0.6rem;font-family:\'IBM Plex Mono\',monospace;text-transform:uppercase;letter-spacing:0.5px;transition:all 0.15s;';
+        var _sOn  = _sT + 'background:var(--accent4);color:#fff;font-weight:600;';
+        var _sOff = _sT + 'background:transparent;color:var(--accent4);font-weight:500;';
+        return '<div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:6px 0 0;">' +
+          '<button type="button" style="' + (_vmodo==='tabla' ? _sOn : _sOff) + '" ' +
+            'onclick="setEjVistaModo(\'tabla\')">Tabla</button>' +
+          '<button type="button" style="' + (_vmodo==='diario' ? _sOn : _sOff) + '" ' +
+            'onclick="setEjVistaModo(\'diario\')">Diario</button>' +
+        '</div>';
+      })() +
     '</div>' +
     // Subenunciado actual
     '<div style="padding:0 20px 18px;">' +
