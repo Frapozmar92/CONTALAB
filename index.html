@@ -17847,6 +17847,102 @@ function renderAsientoSolucionReto(solucion) {
   return renderAsientoFilasReto(filas);
 }
 
+// ── Seguimiento de alumnos en cada reto (solo profesor) ──────
+function _clasificarAlumnosReto(retoId, nSubs) {
+  var g = { completados: [], enProgreso: [], sinEmpezar: [] };
+  var alumnos = APP_DATA.alumnos || [];
+  alumnos.forEach(function(a) {
+    var rs = a.progreso && a.progreso.retoState && a.progreso.retoState[retoId];
+    var resultados = (rs && rs.resultados) || [];
+    var done = 0, ok = 0, ko = 0;
+    for (var i = 0; i < nSubs; i++) {
+      if (resultados[i] === 'ok')      { done++; ok++; }
+      else if (resultados[i] === 'ko') { done++; ko++; }
+    }
+    var started = rs && (done > 0 || (rs.subActual && rs.subActual > 0));
+    var entry = { id: a.id, nombre: a.nombre, done: done, ok: ok, ko: ko, nSubs: nSubs, ultima: a.ultimaActividad || null };
+    if (!started)                 g.sinEmpezar.push(entry);
+    else if (done >= nSubs)       g.completados.push(entry);
+    else                          g.enProgreso.push(entry);
+  });
+  // Orden: completados por nota desc, progreso por % desc, sin empezar alfabético
+  g.completados.sort(function(a,b){ return b.ok - a.ok; });
+  g.enProgreso.sort(function(a,b){ return (b.done/b.nSubs) - (a.done/a.nSubs); });
+  g.sinEmpezar.sort(function(a,b){ return (a.nombre||'').localeCompare(b.nombre||''); });
+  return g;
+}
+
+function renderPanelAlumnosReto(retoId, nSubs) {
+  if (!currentUser || currentUser.rol !== 'profesor') return '';
+  if (!nSubs) return '';
+  var g = _clasificarAlumnosReto(retoId, nSubs);
+  function _fecha(iso) {
+    if (!iso) return '';
+    try { return new Date(iso).toLocaleDateString('es-ES'); } catch(e) { return ''; }
+  }
+  function _empty() {
+    return '<div style="padding:10px 12px;color:var(--text-muted);font-size:0.78rem;font-style:italic;text-align:center;">Ningún alumno</div>';
+  }
+  function _rowComp(a) {
+    var allOk = a.ok === a.nSubs;
+    var color = allOk ? 'var(--green)' : 'var(--accent3)';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid var(--border);font-size:0.8rem;">' +
+             '<span style="color:var(--text);">' + (a.nombre||'—') + '</span>' +
+             '<span style="color:' + color + ';font-family:\'IBM Plex Mono\',monospace;font-size:0.7rem;font-weight:600;white-space:nowrap;">' +
+               a.ok + '/' + a.nSubs + (allOk ? ' ✓' : '') +
+             '</span>' +
+           '</div>';
+  }
+  function _rowProg(a) {
+    var pct = Math.round((a.done / a.nSubs) * 100);
+    return '<div style="padding:6px 10px;border-bottom:1px solid var(--border);">' +
+             '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:0.8rem;">' +
+               '<span>' + (a.nombre||'—') + '</span>' +
+               '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.68rem;color:var(--text-muted);white-space:nowrap;">' +
+                 a.done + '/' + a.nSubs + ' · ' + pct + '%' + (a.ko ? ' · ' + a.ko + ' ✗' : '') +
+               '</span>' +
+             '</div>' +
+             '<div style="height:4px;background:var(--border);border-radius:2px;margin-top:4px;overflow:hidden;">' +
+               '<div style="height:100%;width:' + pct + '%;background:var(--accent4);transition:width .3s;"></div>' +
+             '</div>' +
+           '</div>';
+  }
+  function _rowSinEmp(a) {
+    return '<div style="padding:6px 10px;border-bottom:1px solid var(--border);font-size:0.8rem;color:var(--text-muted);">' +
+             (a.nombre||'—') +
+           '</div>';
+  }
+  var total = g.completados.length + g.enProgreso.length + g.sinEmpezar.length;
+  if (total === 0) return '';
+  var boxStyle = 'background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;max-height:260px;overflow-y:auto;';
+  var labelStyle = 'font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;font-weight:700;';
+  return '<details style="margin-top:16px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);overflow:hidden;">' +
+    '<summary style="cursor:pointer;padding:11px 16px;font-family:\'Playfair Display\',serif;font-size:0.88rem;font-weight:700;color:var(--text);display:flex;justify-content:space-between;align-items:center;gap:10px;list-style:none;">' +
+      '<span>👥 Seguimiento de alumnos</span>' +
+      '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.7rem;font-weight:500;color:var(--text-muted);">' +
+        '<span style="color:var(--green);">✓ ' + g.completados.length + '</span> · ' +
+        '<span style="color:var(--accent4);">⏳ ' + g.enProgreso.length + '</span> · ' +
+        '<span>⚪ ' + g.sinEmpezar.length + '</span>' +
+        ' · Total ' + total +
+      '</span>' +
+    '</summary>' +
+    '<div style="padding:4px 14px 14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;border-top:1px solid var(--border);">' +
+      '<div>' +
+        '<div style="' + labelStyle + 'color:var(--green);">✓ Completados (' + g.completados.length + ')</div>' +
+        '<div style="' + boxStyle + '">' + (g.completados.length ? g.completados.map(_rowComp).join('') : _empty()) + '</div>' +
+      '</div>' +
+      '<div>' +
+        '<div style="' + labelStyle + 'color:var(--accent4);">⏳ En progreso (' + g.enProgreso.length + ')</div>' +
+        '<div style="' + boxStyle + '">' + (g.enProgreso.length ? g.enProgreso.map(_rowProg).join('') : _empty()) + '</div>' +
+      '</div>' +
+      '<div>' +
+        '<div style="' + labelStyle + 'color:var(--text-muted);">⚪ Sin empezar (' + g.sinEmpezar.length + ')</div>' +
+        '<div style="' + boxStyle + '">' + (g.sinEmpezar.length ? g.sinEmpezar.map(_rowSinEmp).join('') : _empty()) + '</div>' +
+      '</div>' +
+    '</div>' +
+  '</details>';
+}
+
 // ── Comprobar operación del reto ──────────────────────────────
 function confirmarRetoOp(retoId, si) {
   var reto = (state.ejerciciosProfesor||[]).find(function(e){ return String(e.id) === String(retoId); });
