@@ -14103,7 +14103,6 @@ function buildEjercicioHTML(ej, ejIdx) {
     var sr = est.subResps[vistaIdx];
     var asientosDef2 = normalizarAsientos(sub);
     var userAsientos = sr && sr.asientos ? sr.asientos : (sr && sr.asiento ? [sr.asiento] : [[]]);
-    // Mostrar fecha por asiento (array fechas o fallback a fecha única)
     var fechasArr = (sr && sr.fechas) ? sr.fechas : (sr && sr.fecha ? [sr.fecha] : []);
     var asientoAlumnoHTML = userAsientos.map(function(ua, ai) {
       var f = fechasArr[ai] || '';
@@ -14113,19 +14112,30 @@ function buildEjercicioHTML(ej, ejIdx) {
             '<span class="asiento-fecha-badge">' + f + '</span>'+
           '</div>'
         : '';
-      var etq = asientosDef2.length > 1 ? 'Asiento ' + (ai+1) : '';
-      return fBadge +
-        _buildAsientoVista(ua || [], etq || (f ? f : ''));
+      var etq = asientosDef2.length > 1
+        ? '<div style="padding:5px 12px;background:var(--surface2);border-bottom:1px solid var(--border);font-family:\'IBM Plex Mono\',monospace;font-size:0.58rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;">▸ Asiento ' + (ai+1) + '</div>'
+        : '';
+      return fBadge + etq + renderAsientoFilasReto(ua||[]);
     }).join('');
     var solHTML = '';
     if (res === 'ko') {
-      // Feedback granular: diagnóstico detallado de errores por asiento
       var _diagArr = diagnosticarSubenunciado(userAsientos, sub);
       var _granHTML = buildFeedbackGranular(_diagArr, asientosDef2.length > 1);
-      solHTML = _granHTML + buildSolAsientosHTML(sub);
+      var todasSolsEj = [normalizarAsientos(sub)].concat(sub.alternativas || []);
+      var _solBody = '<div style="border:1px solid rgba(0,0,0,0.08);border-radius:8px;overflow:hidden;margin-bottom:8px;">' +
+        '<div style="padding:6px 12px;background:var(--surface2);border-bottom:1px solid var(--border);">' +
+          '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.58rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);font-weight:700;">📋 Solución correcta</span>' +
+        '</div>' +
+        todasSolsEj[0].map(function(a, ai) {
+          var etq = todasSolsEj[0].length > 1
+            ? '<div style="padding:5px 12px;background:var(--surface2);border-bottom:1px solid var(--border);font-family:\'IBM Plex Mono\',monospace;font-size:0.58rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;">▸ Asiento ' + (ai+1) + '</div>'
+            : '';
+          return etq + renderAsientoSolucionReto(a.solucion || []);
+        }).join('') +
+      '</div>';
+      solHTML = _granHTML + _solBody;
     }
     var resColor = res === 'ok' ? 'rgba(46,139,110,0.25)' : 'rgba(192,57,43,0.2)';
-    // Botón para reintentar solo este subenunciado
     var resetSubBtn =
       '<div style="margin-top:10px;">' +
         '<button class="btn btn-outline btn-sm" ' +
