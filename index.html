@@ -3545,7 +3545,16 @@ resetProfForm = function() {
 
               <div class="prof-field">
                 <label class="prof-label">Introducción / contexto *</label>
-                <textarea class="prof-textarea" id="pfr-intro" rows="3" placeholder="Ej: La empresa BETA S.L. realiza las siguientes operaciones durante el mes de enero. Contabiliza cada operación con sus asientos correspondientes."></textarea>
+                <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;">
+                  <button type="button" class="btn btn-outline btn-sm" onmousedown="event.preventDefault()" onclick="_pfrIntroFocus();document.execCommand('bold')" title="Negrita"><b>B</b></button>
+                  <button type="button" class="btn btn-outline btn-sm" onmousedown="event.preventDefault()" onclick="_pfrIntroFocus();document.execCommand('italic')" title="Cursiva"><i>I</i></button>
+                  <button type="button" class="btn btn-outline btn-sm" onmousedown="event.preventDefault()" onclick="_pfrIntroFocus();document.execCommand('underline')" title="Subrayado"><u>S</u></button>
+                  <button type="button" class="btn btn-outline btn-sm" onmousedown="event.preventDefault()" onclick="_pfrIntroInsImg()" title="Insertar imagen" style="color:var(--accent4);border-color:var(--accent4);">🖼 Imagen</button>
+                  <button type="button" class="btn btn-outline btn-sm" onmousedown="event.preventDefault()" onclick="_pfrIntroFocus();document.execCommand('removeFormat')" title="Quitar formato">✕ Fmt</button>
+                </div>
+                <div id="pfr-intro" class="prof-textarea" contenteditable="true"
+                     data-placeholder="Ej: La empresa BETA S.L. realiza las siguientes operaciones durante el mes de enero. Contabiliza cada operación con sus asientos correspondientes."
+                     style="min-height:84px;line-height:1.5;white-space:pre-wrap;"></div>
               </div>
 
               <div class="prof-field" style="margin-top:8px;">
