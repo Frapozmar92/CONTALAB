@@ -17200,7 +17200,11 @@ function guardarReto() {
   if (!currentUser || currentUser.rol !== 'profesor') { flash('⚠ Acción no autorizada', 'var(--red)'); return; }
 
   var titulo      = document.getElementById('pfr-titulo').value.trim();
-  var intro       = document.getElementById('pfr-intro').value.trim();
+  var _introEl    = document.getElementById('pfr-intro');
+  var intro       = (_introEl.innerHTML || '').trim();
+  // Si solo contiene espacios/br, considerar vacío para la validación
+  var _introTexto = (_introEl.textContent || '').trim();
+  if (!_introTexto && !/\<img/i.test(intro)) intro = '';
   var tema        = document.getElementById('pfr-tema').value;
   var pista       = document.getElementById('pfr-pista').value.trim();
   var fechaLimite = document.getElementById('pfr-fecha-limite').value || '';
