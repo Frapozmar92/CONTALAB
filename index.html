@@ -16702,6 +16702,38 @@ var _retoEditingId  = null;
 // ─────────────────────────────────────────────────────────────
 // FORMULARIO PROFESOR — Reto
 // ─────────────────────────────────────────────────────────────
+// ── Helpers del editor de introducción del reto (con imagen) ──
+function _pfrIntroFocus() {
+  var el = document.getElementById('pfr-intro');
+  if (el) el.focus();
+}
+function _pfrIntroInsImg() {
+  var ed = document.getElementById('pfr-intro');
+  if (!ed) return;
+  ed.focus();
+  // Guardar posición del cursor
+  var savedRange = null;
+  var sel = window.getSelection();
+  if (sel && sel.rangeCount > 0) {
+    var r = sel.getRangeAt(0);
+    // Solo usar si la selección está dentro del editor
+    if (ed.contains(r.commonAncestorContainer)) savedRange = r.cloneRange();
+  }
+  if (!savedRange) {
+    // Situar el cursor al final del contenido
+    var range = document.createRange();
+    range.selectNodeContents(ed);
+    range.collapse(false);
+    savedRange = range;
+  }
+  // Reutilizar el modal de imagen del editor de teoría
+  if (typeof _wAbrirModalImagen === 'function') {
+    _wAbrirModalImagen('pfr-intro', ed, savedRange);
+  } else {
+    alert('Editor de imágenes no disponible.');
+  }
+}
+
 function resetRetoForm() {
   _retoSubCounter = 0; _retoSubs = []; _retoFilaCounter = 0; _retoEditingId = null;
   _retoAlts = {}; _retoAltFilaCounter = {};
