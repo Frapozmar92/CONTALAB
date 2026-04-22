@@ -9289,9 +9289,17 @@ function _wAbrirModalImagen(edIdx, edEl, savedRange) {
     var src = _dataURL || urlInput.value.trim();
     if (!src) return;
     var alt = altInput.value.trim();
-    var html = '<div style="margin:10px 0;text-align:center;">' +
+
+    // Alineación → text-align del wrapper + margen auto si imagen flotante sería innecesario
+    var alignCSS = 'text-align:' + _align + ';';
+    // Tamaño → width en % del contenedor
+    var imgStyle = 'width:' + _sizePct + '%;max-width:100%;height:auto;border-radius:8px;border:1px solid var(--border);';
+    // Para izquierda/derecha añadimos display:inline-block para respetar text-align
+    imgStyle += 'display:inline-block;';
+
+    var html = '<div style="margin:10px 0;' + alignCSS + '">' +
       '<img src="' + src + '" alt="' + alt.replace(/"/g,'&quot;') + '" ' +
-        'style="max-width:100%;height:auto;border-radius:8px;border:1px solid var(--border);">' +
+        'style="' + imgStyle + '">' +
       (alt ? '<div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;font-style:italic;">' + alt + '</div>' : '') +
     '</div><p><br></p>';
 
