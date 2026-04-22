@@ -17325,6 +17325,9 @@ function renderTemaReto(num, retoIdxOverride) {
     '</div>';
   }
 
+  // ── Panel de seguimiento de alumnos (solo profesor) ──────────
+  html += renderPanelAlumnosReto(reto.id, nSubs);
+
   html += '</div></div>'; // reto-card-body + reto-card
   cont.innerHTML = html;
 
