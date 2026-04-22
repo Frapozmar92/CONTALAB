@@ -17798,6 +17798,22 @@ function setRetoVistaModo(modo, num, idx) {
   try { localStorage.setItem('retoVistaModo', window._retoVistaModo); } catch(e) {}
   if (typeof num !== 'undefined') renderTemaReto(num, idx);
 }
+
+// Cambia el modo de vista desde la tarjeta de ejercicio (reutiliza el mismo modo)
+function setEjVistaModo(modo) {
+  window._retoVistaModo = (modo === 'diario') ? 'diario' : 'tabla';
+  try { localStorage.setItem('retoVistaModo', window._retoVistaModo); } catch(e) {}
+  // Re-renderizar la vista activa de ejercicios del alumno
+  try {
+    if (typeof renderEjProfAlumnoList === 'function') {
+      if (document.getElementById('panel-ejprofesor') && document.getElementById('panel-ejprofesor').classList.contains('active')) {
+        renderEjProfAlumnoList();
+      } else {
+        renderEjProfAlumnoList();
+      }
+    }
+  } catch(e) { console.warn('[setEjVistaModo] re-render error:', e.message); }
+}
 try {
   var _rm = localStorage.getItem('retoVistaModo');
   if (_rm === 'diario' || _rm === 'tabla') window._retoVistaModo = _rm;
