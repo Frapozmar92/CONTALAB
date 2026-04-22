@@ -17165,8 +17165,7 @@ function renderTemaReto(num, retoIdxOverride) {
   var _styOn  = _styTab + 'background:var(--accent4);color:#fff;font-weight:600;';
   var _styOff = _styTab + 'background:transparent;color:var(--accent4);font-weight:500;';
   html +=
-    '<div style="display:flex;align-items:center;justify-content:flex-end;gap:4px;padding:4px 0;">' +
-      '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.58rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-right:2px;">Vista:</span>' +
+    '<div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:4px 0;">' +
       '<button type="button" style="' + (_vmodo==='tabla' ? _styOn : _styOff) + '" ' +
         'onclick="setRetoVistaModo(\'tabla\',' + num + ',' + idx + ')">Tabla</button>' +
       '<button type="button" style="' + (_vmodo==='diario' ? _styOn : _styOff) + '" ' +
