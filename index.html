@@ -18170,6 +18170,363 @@ function resetearReto(retoId, num) {
   flash('↺ Reto reiniciado', 'var(--text-muted)');
 }
 
+// ============================================================
+// PDF CUENTAS ANUALES (al terminar un reto)
+// ============================================================
+function generarPDFCuentasAnuales(retoId, num) {
+  var jsPDF = window.jspdf && window.jspdf.jsPDF;
+  if (!jsPDF) { alert('jsPDF no disponible. No se puede generar el PDF.'); return; }
+
+  var reto = (state.ejerciciosProfesor||[]).find(function(e){ return String(e.id) === String(retoId); });
+  if (!reto) { alert('Reto no encontrado'); return; }
+
+  // ── Filtrar movimientos del mayor pertenecientes a este reto ────────
+  var prefijo = 'Reto.' + retoId + '.';
+  var cuentas = []; // {num, nombre, debe, haber, saldo, grupo}
+  Object.keys(state.mayorData).forEach(function(cta) {
+    var d = state.mayorData[cta];
+    var debe  = d.debe.filter(function(e){  return e.desc && e.desc.indexOf(prefijo) === 0; })
+                      .reduce(function(a,e){ return a + (+e.amount||0); }, 0);
+    var haber = d.haber.filter(function(e){ return e.desc && e.desc.indexOf(prefijo) === 0; })
+                       .reduce(function(a,e){ return a + (+e.amount||0); }, 0);
+    if (debe === 0 && haber === 0) return;
+    cuentas.push({
+      num: cta,
+      nombre: d.nombre || '',
+      debe: debe,
+      haber: haber,
+      saldo: debe - haber, // positivo = deudor
+      grupo: String(cta).charAt(0)
+    });
+  });
+
+  // ── Clasificación PGC ───────────────────────────────────────────────
+  var activoNoCorriente = [], activoCorriente = [], patrimonioNeto = [], pasivoNoCorriente = [], pasivoCorriente = [];
+  var gastos = [], ingresos = [];
+
+  cuentas.forEach(function(c) {
+    var g = c.grupo;
+    var n = String(c.num);
+    if (g === '6') { gastos.push(c);   return; }
+    if (g === '7') { ingresos.push(c); return; }
+    if (g === '1') {
+      // 10-13 neto; 14 provisiones; 15-18 deudas largo plazo
+      var dos = n.substring(0,2);
+      var d2 = parseInt(dos, 10);
+      if (d2 >= 10 && d2 <= 13) patrimonioNeto.push(c);
+      else pasivoNoCorriente.push(c);
+      return;
+    }
+    if (g === '2') {
+      // 28/29 amort/deterioro reducen activo → aún así activo no corriente (signo)
+      activoNoCorriente.push(c);
+      return;
+    }
+    if (g === '3') { activoCorriente.push(c); return; }
+    if (g === '4' || g === '5') {
+      // Clasificación por saldo: deudor = activo corriente, acreedor = pasivo corriente
+      if (c.saldo >= 0) activoCorriente.push(c);
+      else              pasivoCorriente.push(c);
+      return;
+    }
+  });
+
+  // ── Cálculos P&G ────────────────────────────────────────────────────
+  var totIngresos = ingresos.reduce(function(a,c){ return a + (c.haber - c.debe); }, 0);
+  var totGastos   = gastos.reduce(function(a,c){ return a + (c.debe - c.haber); }, 0);
+  var resultado   = totIngresos - totGastos;
+
+  // Suma de saldos por bloque (valor absoluto con signo correcto)
+  function sumActivo(arr)  { return arr.reduce(function(a,c){ return a + c.saldo;  }, 0); }
+  function sumPasivo(arr)  { return arr.reduce(function(a,c){ return a + (-c.saldo); }, 0); }
+
+  var totActivoNC = sumActivo(activoNoCorriente);
+  var totActivoC  = sumActivo(activoCorriente);
+  var totActivo   = totActivoNC + totActivoC;
+  var totPN       = sumPasivo(patrimonioNeto) + resultado; // incluye resultado del ejercicio
+  var totPasivoNC = sumPasivo(pasivoNoCorriente);
+  var totPasivoC  = sumPasivo(pasivoCorriente);
+  var totPasivo   = totPN + totPasivoNC + totPasivoC;
+
+  // ── PDF setup ───────────────────────────────────────────────────────
+  var doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  var W=210, H=297, ML=16, MR=16, CW=W-ML-MR;
+  var y = ML;
+  var now = new Date();
+  var fecha = now.toLocaleDateString('es-ES');
+  var alumno = currentUser ? currentUser.nombre : '—';
+  var empresa = reto.empresa || reto.titulo || 'Empresa';
+
+  function checkPage(n) { if (y + (n||10) > H - 14) { doc.addPage(); y = ML; } }
+  function txt(s, x, size, bold, color) {
+    doc.setFont('helvetica', bold?'bold':'normal');
+    doc.setFontSize(size||10);
+    doc.setTextColor.apply(doc, color||[30,28,24]);
+    doc.text(String(s), x, y);
+  }
+  function txtR(s, x, size, bold, color) {
+    doc.setFont('helvetica', bold?'bold':'normal');
+    doc.setFontSize(size||10);
+    doc.setTextColor.apply(doc, color||[30,28,24]);
+    doc.text(String(s), x, y, {align:'right'});
+  }
+  function hline(color) {
+    doc.setDrawColor.apply(doc, color||[210,205,195]);
+    doc.setLineWidth(0.25);
+    doc.line(ML, y, W-MR, y);
+    y += 2;
+  }
+  function rect(rx, ry, rw, rh, fillRGB, strokeRGB) {
+    if (fillRGB)   { doc.setFillColor.apply(doc, fillRGB);   doc.rect(rx,ry,rw,rh,'F'); }
+    if (strokeRGB) { doc.setDrawColor.apply(doc, strokeRGB); doc.setLineWidth(0.3); doc.rect(rx,ry,rw,rh,'S'); }
+  }
+  function fmtEuro(n) {
+    var v = (+n||0);
+    return v.toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+  }
+  function h1(s) {
+    checkPage(14);
+    rect(ML, y-4, CW, 9, [245,242,236]);
+    txt(s, ML+3, 12, true, [30,28,24]);
+    y += 9;
+  }
+  function h2(s) {
+    checkPage(10);
+    y += 3;
+    txt(s, ML, 10.5, true, [76,89,121]);
+    y += 5;
+    hline([180,190,210]);
+    y += 1;
+  }
+  function parrafo(s, size) {
+    size = size || 9.5;
+    doc.setFont('helvetica','normal'); doc.setFontSize(size); doc.setTextColor(30,28,24);
+    var lines = doc.splitTextToSize(String(s), CW);
+    lines.forEach(function(ln){ checkPage(5); doc.text(ln, ML, y); y += size*0.45 + 1; });
+  }
+  function filaDoble(label, valor, bold) {
+    checkPage(5);
+    txt(label, ML+2, 9.5, bold);
+    txtR(fmtEuro(valor), W-MR-2, 9.5, bold);
+    y += 4.5;
+  }
+  function tablaCuentas(arr, totalLabel, total, signo) {
+    if (!arr.length) { filaDoble('(sin movimientos)', 0); return; }
+    arr.forEach(function(c) {
+      checkPage(5);
+      var val = signo === -1 ? -c.saldo : c.saldo;
+      txt('(' + c.num + ') ' + (c.nombre||'').substring(0,48), ML+4, 8.8, false, [70,65,58]);
+      txtR(fmtEuro(val), W-MR-2, 8.8, false, [70,65,58]);
+      y += 4;
+    });
+    y += 0.5;
+    hline([200,195,185]);
+    filaDoble(totalLabel, total, true);
+  }
+
+  // ════════════════════════════════════════════════════════════════════
+  // PORTADA
+  // ════════════════════════════════════════════════════════════════════
+  rect(0, 0, W, 44, [245,242,236]);
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(107,100,86);
+  doc.text('CUENTAS ANUALES', ML, 10);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+  doc.text('Modelo PGC — Plan General de Contabilidad', ML, 15);
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(30,28,24);
+  doc.text(String(empresa).substring(0,48), ML, 27);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(90,85,75);
+  doc.text('Ejercicio cerrado · ' + fecha, ML, 34);
+  doc.text('Elaborado por: ' + alumno, ML, 39);
+
+  y = 54;
+
+  h2('Contenido de las Cuentas Anuales');
+  parrafo('Conforme al Plan General de Contabilidad (RD 1514/2007) y al PGC de PYMES (RD 1515/2007), las cuentas anuales forman una unidad y comprenden:');
+  parrafo('1. Balance de Situación.  2. Cuenta de Pérdidas y Ganancias.  3. Estado de Cambios en el Patrimonio Neto (ECPN).  4. Estado de Flujos de Efectivo (EFE).  5. Memoria.');
+  parrafo('Las empresas que puedan formular balance y memoria abreviados NO están obligadas a incluir el Estado de Flujos de Efectivo (art. 257 LSC). Igualmente, las PYMES que apliquen el PGC-PYMES pueden omitir el ECPN bajo determinadas condiciones. En este documento se incluyen Balance, Pérdidas y Ganancias y Memoria, y se hace mención teórica al ECPN y al EFE.');
+
+  // ════════════════════════════════════════════════════════════════════
+  // BALANCE DE SITUACIÓN
+  // ════════════════════════════════════════════════════════════════════
+  doc.addPage(); y = ML;
+  h1('1. BALANCE DE SITUACIÓN');
+  parrafo('Comprende, con la debida separación, los bienes y derechos que constituyen el activo de la empresa y las obligaciones y los fondos propios que forman el pasivo.', 9);
+
+  // ACTIVO
+  h2('A) ACTIVO');
+  h2('A.1) Activo no corriente');
+  tablaCuentas(activoNoCorriente, 'Total activo no corriente', totActivoNC, 1);
+  h2('A.2) Activo corriente');
+  tablaCuentas(activoCorriente, 'Total activo corriente', totActivoC, 1);
+  y += 2;
+  rect(ML, y-3, CW, 7, [232,228,218]);
+  txt('TOTAL ACTIVO (A)', ML+2, 11, true);
+  txtR(fmtEuro(totActivo), W-MR-2, 11, true);
+  y += 8;
+
+  // PATRIMONIO NETO Y PASIVO
+  checkPage(14);
+  h2('B) PATRIMONIO NETO Y PASIVO');
+  h2('B.1) Patrimonio neto');
+  patrimonioNeto.forEach(function(c) {
+    checkPage(5);
+    txt('(' + c.num + ') ' + (c.nombre||'').substring(0,48), ML+4, 8.8, false, [70,65,58]);
+    txtR(fmtEuro(-c.saldo), W-MR-2, 8.8, false, [70,65,58]);
+    y += 4;
+  });
+  checkPage(5);
+  txt('Resultado del ejercicio', ML+4, 8.8, false, [70,65,58]);
+  txtR(fmtEuro(resultado), W-MR-2, 8.8, false, [70,65,58]);
+  y += 4;
+  hline([200,195,185]);
+  filaDoble('Total patrimonio neto', totPN, true);
+
+  h2('B.2) Pasivo no corriente');
+  tablaCuentas(pasivoNoCorriente, 'Total pasivo no corriente', totPasivoNC, -1);
+  h2('B.3) Pasivo corriente');
+  tablaCuentas(pasivoCorriente, 'Total pasivo corriente', totPasivoC, -1);
+  y += 2;
+  rect(ML, y-3, CW, 7, [232,228,218]);
+  txt('TOTAL PATRIMONIO NETO Y PASIVO (B)', ML+2, 11, true);
+  txtR(fmtEuro(totPasivo), W-MR-2, 11, true);
+  y += 8;
+
+  checkPage(8);
+  var cuadra = Math.abs(totActivo - totPasivo) < 0.01;
+  txt(cuadra ? '✓ Balance cuadrado (A = B)' : '⚠ Descuadre: ' + fmtEuro(totActivo - totPasivo),
+      ML, 9, true, cuadra ? [46,139,110] : [192,57,43]);
+  y += 6;
+
+  // ════════════════════════════════════════════════════════════════════
+  // CUENTA DE PÉRDIDAS Y GANANCIAS
+  // ════════════════════════════════════════════════════════════════════
+  doc.addPage(); y = ML;
+  h1('2. CUENTA DE PÉRDIDAS Y GANANCIAS');
+  parrafo('Recoge el resultado del ejercicio, separando debidamente los ingresos y los gastos imputables al mismo, y distinguiendo los resultados de explotación de los financieros.', 9);
+
+  h2('Ingresos (Grupo 7)');
+  if (!ingresos.length) filaDoble('(sin ingresos)', 0);
+  else {
+    ingresos.forEach(function(c) {
+      checkPage(5);
+      txt('(' + c.num + ') ' + (c.nombre||'').substring(0,48), ML+4, 8.8, false, [70,65,58]);
+      txtR(fmtEuro(c.haber - c.debe), W-MR-2, 8.8, false, [70,65,58]);
+      y += 4;
+    });
+    hline([200,195,185]);
+    filaDoble('Total ingresos', totIngresos, true);
+  }
+
+  h2('Gastos (Grupo 6)');
+  if (!gastos.length) filaDoble('(sin gastos)', 0);
+  else {
+    gastos.forEach(function(c) {
+      checkPage(5);
+      txt('(' + c.num + ') ' + (c.nombre||'').substring(0,48), ML+4, 8.8, false, [70,65,58]);
+      txtR(fmtEuro(c.debe - c.haber), W-MR-2, 8.8, false, [70,65,58]);
+      y += 4;
+    });
+    hline([200,195,185]);
+    filaDoble('Total gastos', totGastos, true);
+  }
+
+  y += 3;
+  var colorR = resultado >= 0 ? [46,139,110] : [192,57,43];
+  rect(ML, y-3, CW, 9, resultado >= 0 ? [235,246,240] : [250,235,232]);
+  txt('RESULTADO DEL EJERCICIO (Ingresos − Gastos)', ML+2, 11, true, colorR);
+  txtR(fmtEuro(resultado), W-MR-2, 11, true, colorR);
+  y += 9;
+  parrafo(resultado >= 0 ? 'Beneficio del ejercicio.' : 'Pérdida del ejercicio.', 9);
+
+  // ════════════════════════════════════════════════════════════════════
+  // MEMORIA
+  // ════════════════════════════════════════════════════════════════════
+  doc.addPage(); y = ML;
+  h1('3. MEMORIA');
+  parrafo('La memoria completa, amplía y comenta la información contenida en los otros documentos que integran las cuentas anuales. A continuación se presentan los apartados establecidos por el PGC-PYMES.', 9);
+
+  var memoria = [
+    ['1. Actividad de la empresa',
+     'La empresa ' + empresa + ' desarrolla su actividad económica con domicilio social en territorio español. Su objeto social se corresponde con la descripción del reto realizado. La moneda funcional es el euro.'],
+    ['2. Bases de presentación de las cuentas anuales',
+     'a) Imagen fiel: Las cuentas anuales se han preparado a partir de los registros contables y se presentan de acuerdo con la legislación mercantil vigente y con las normas del PGC (o PGC-PYMES), con el objeto de mostrar la imagen fiel del patrimonio, la situación financiera y los resultados.  b) Principios contables no obligatorios aplicados: ninguno.  c) Aspectos críticos de la valoración y estimación de la incertidumbre: no existen incertidumbres significativas.  d) Comparación de la información: no procede (primer ejercicio).  e) Agrupación de partidas: no aplica.  f) Elementos recogidos en varias partidas: no aplica.  g) Cambios en criterios contables: no se han producido.  h) Corrección de errores: no se han detectado.'],
+    ['3. Aplicación de resultados',
+     (resultado >= 0
+       ? 'Se propone destinar el beneficio del ejercicio (' + fmtEuro(resultado) + ') a reserva legal y reservas voluntarias, conforme a lo establecido en el art. 274 LSC.'
+       : 'La pérdida del ejercicio (' + fmtEuro(resultado) + ') se propone compensar con reservas disponibles o, en su defecto, imputar a resultados negativos de ejercicios anteriores.')],
+    ['4. Normas de registro y valoración',
+     'Se han aplicado los criterios de valoración del PGC: coste histórico, devengo, principio de empresa en funcionamiento, prudencia valorativa, no compensación y uniformidad. Inmovilizado material: precio de adquisición menos amortización acumulada. Existencias: precio de adquisición o coste de producción. Instrumentos financieros: coste amortizado salvo los mantenidos para negociar (valor razonable). Impuesto sobre beneficios: método del efecto impositivo.'],
+    ['5. Inmovilizado material, intangible e inversiones inmobiliarias',
+     'Detalle de altas, bajas y amortizaciones del ejercicio según los movimientos del grupo 2 registrados. Las amortizaciones se calculan sobre la vida útil estimada siguiendo el método lineal.'],
+    ['6. Activos financieros',
+     'Clasificación según categorías del PGC: préstamos y partidas a cobrar, inversiones mantenidas hasta el vencimiento, activos a valor razonable con cambios en pérdidas y ganancias, disponibles para la venta. Valoración inicial a valor razonable y posterior a coste amortizado cuando proceda.'],
+    ['7. Pasivos financieros',
+     'Clasificación en débitos y partidas a pagar, pasivos a valor razonable con cambios en pérdidas y ganancias, y otros pasivos financieros a coste amortizado. Plazos de vencimiento: corriente (≤ 12 meses) y no corriente (> 12 meses).'],
+    ['8. Fondos propios',
+     'Movimientos del capital social, reservas y resultado. El capital social está totalmente suscrito y desembolsado. No existen acciones propias.'],
+    ['9. Situación fiscal',
+     'La sociedad tributa en el Impuesto sobre Sociedades al tipo general vigente. El IVA se liquida trimestralmente. No existen contingencias fiscales significativas.'],
+    ['10. Ingresos y gastos',
+     'Detalle de la cifra de negocios por tipo de actividad y distribución geográfica cuando proceda. Los gastos de personal, aprovisionamientos y servicios exteriores se detallan en las partidas correspondientes de la Cuenta de Pérdidas y Ganancias.'],
+    ['11. Operaciones con partes vinculadas',
+     'No se han realizado operaciones con partes vinculadas distintas de las habituales propias del tráfico ordinario de la empresa.'],
+    ['12. Otra información',
+     'Número medio de empleados del ejercicio, honorarios de auditoría (si procede) e información sobre aplazamientos de pago a proveedores conforme a la Ley 15/2010.']
+  ];
+
+  memoria.forEach(function(ap) {
+    h2(ap[0]);
+    parrafo(ap[1], 9);
+  });
+
+  // ════════════════════════════════════════════════════════════════════
+  // ANEXO TEÓRICO: ECPN Y EFE
+  // ════════════════════════════════════════════════════════════════════
+  doc.addPage(); y = ML;
+  h1('4. ESTADO DE CAMBIOS EN EL PATRIMONIO NETO (ECPN) · Mención teórica');
+  parrafo('El ECPN informa de los cambios producidos en el patrimonio neto derivados de:', 9);
+  parrafo('a) El resultado del ejercicio de la cuenta de pérdidas y ganancias.  b) El importe de los ingresos y gastos reconocidos directamente en el patrimonio neto.  c) Los ajustes al patrimonio neto debidos a cambios en criterios contables y correcciones de errores.  d) Las restantes variaciones del patrimonio neto derivadas de operaciones con los socios o propietarios (aumentos o reducciones de capital, distribución de dividendos, operaciones con acciones propias, etc.).', 9);
+  parrafo('Consta de dos documentos: el Estado de Ingresos y Gastos Reconocidos (parte A) y el Estado Total de Cambios en el Patrimonio Neto (parte B).', 9);
+
+  h2('Obligación de formular el ECPN');
+  parrafo('Las empresas que aplican el PGC-PYMES NO están obligadas a elaborar el Estado de Cambios en el Patrimonio Neto. Las que aplican el PGC normal sí están obligadas, salvo que puedan formular balance abreviado (art. 257 LSC), en cuyo caso el ECPN también es voluntario.', 9);
+
+  y += 4;
+  h1('5. ESTADO DE FLUJOS DE EFECTIVO (EFE) · Mención teórica');
+  parrafo('El EFE informa sobre el origen y la utilización de los activos monetarios representativos de efectivo y otros activos líquidos equivalentes, clasificando los movimientos por actividades e indicando la variación neta de dicha magnitud en el ejercicio.', 9);
+  parrafo('Se estructura en tres grandes apartados:', 9);
+  parrafo('• Flujos de efectivo de las ACTIVIDADES DE EXPLOTACIÓN: cobros y pagos ocasionados por las actividades que constituyen la principal fuente de ingresos de la empresa.', 9);
+  parrafo('• Flujos de efectivo de las ACTIVIDADES DE INVERSIÓN: pagos por adquisición de activos no corrientes y cobros procedentes de su enajenación.', 9);
+  parrafo('• Flujos de efectivo de las ACTIVIDADES DE FINANCIACIÓN: cobros procedentes de la emisión de instrumentos de patrimonio o pasivo financiero, y pagos por amortización o devolución de los mismos, así como dividendos pagados.', 9);
+
+  h2('Obligación de formular el EFE');
+  parrafo('Conforme al art. 257 del Texto Refundido de la Ley de Sociedades de Capital, podrán formular Balance, Estado de Cambios en el Patrimonio Neto y Memoria ABREVIADOS, y quedarán EXENTAS de elaborar el Estado de Flujos de Efectivo, las sociedades que durante dos ejercicios consecutivos reúnan, a la fecha de cierre de cada uno de ellos, al menos DOS de las siguientes circunstancias:', 9);
+  parrafo('1. Que el total de las partidas del activo no supere los 4.000.000 €.', 9);
+  parrafo('2. Que el importe neto de la cifra anual de negocios no supere los 8.000.000 €.', 9);
+  parrafo('3. Que el número medio de trabajadores empleados durante el ejercicio no sea superior a 50.', 9);
+  parrafo('Las empresas que apliquen el PGC-PYMES tampoco están obligadas a elaborar el EFE.', 9);
+
+  h2('Formulación para PYMES (resumen)');
+  parrafo('• Balance abreviado y Memoria abreviada: art. 257 LSC (umbrales anteriores).', 9);
+  parrafo('• Pérdidas y Ganancias abreviada: art. 258 LSC — activo ≤ 11.400.000 €, cifra de negocios ≤ 22.800.000 €, empleados ≤ 250 (dos de tres durante dos ejercicios consecutivos).', 9);
+  parrafo('• PGC-PYMES (RD 1515/2007): aplicable a empresas que durante dos ejercicios consecutivos cumplan dos de los tres límites establecidos para formular balance abreviado.', 9);
+
+  // ── Pie de página en todas ─────────────────────────────────────────
+  var total = doc.internal.getNumberOfPages();
+  for (var i = 1; i <= total; i++) {
+    doc.setPage(i);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(140,135,125);
+    doc.text('Cuentas Anuales · ' + empresa + ' · ' + fecha, ML, H-8);
+    doc.text('Página ' + i + ' / ' + total, W-MR, H-8, {align:'right'});
+  }
+
+  // ── Guardar ────────────────────────────────────────────────────────
+  var nombre = 'CuentasAnuales_' + String(empresa).replace(/[^a-zA-Z0-9]/g,'_').substring(0,30) + '_' + now.toISOString().substring(0,10) + '.pdf';
+  doc.save(nombre);
+  if (typeof flash === 'function') flash('📄 Cuentas Anuales descargadas', 'var(--accent4)');
+}
+
 // ── Inicializar subResps del formulario al cargar ─────────────
 (function() {
   var orig = resetRetoForm;
