@@ -9115,8 +9115,40 @@ function _wAbrirModalImagen(edIdx, edEl, savedRange) {
           'style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:0.85rem;outline:none;box-sizing:border-box;">' +
       '</div>' +
 
+      // Tamaño de la imagen
+      '<div style="margin-bottom:14px;">' +
+        '<label style="display:block;font-size:0.78rem;color:var(--text-muted);margin-bottom:6px;">Tamaño</label>' +
+        '<div id="wimg-size-btns" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">' +
+          '<button type="button" data-size="25"  class="wimg-size-btn">Pequeña · 25%</button>' +
+          '<button type="button" data-size="50"  class="wimg-size-btn active">Mediana · 50%</button>' +
+          '<button type="button" data-size="75"  class="wimg-size-btn">Grande · 75%</button>' +
+          '<button type="button" data-size="100" class="wimg-size-btn">Completa · 100%</button>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:8px;">' +
+          '<span style="font-size:0.72rem;color:var(--text-muted);">Personalizado:</span>' +
+          '<input type="range" id="wimg-size-range" min="10" max="100" step="5" value="50" ' +
+            'style="flex:1;accent-color:var(--accent4);">' +
+          '<input type="number" id="wimg-size-num" min="10" max="100" step="5" value="50" ' +
+            'style="width:56px;padding:4px 6px;border:1px solid var(--border);border-radius:5px;background:var(--bg);color:var(--text);font-size:0.8rem;text-align:center;">' +
+          '<span style="font-size:0.75rem;color:var(--text-muted);">%</span>' +
+        '</div>' +
+        // Alineación
+        '<div style="display:flex;gap:6px;margin-top:8px;">' +
+          '<span style="font-size:0.72rem;color:var(--text-muted);align-self:center;margin-right:2px;">Alineación:</span>' +
+          '<button type="button" data-align="left"   class="wimg-align-btn">⬅ Izquierda</button>' +
+          '<button type="button" data-align="center" class="wimg-align-btn active">↔ Centro</button>' +
+          '<button type="button" data-align="right"  class="wimg-align-btn">➡ Derecha</button>' +
+        '</div>' +
+      '</div>' +
+
+      '<style>' +
+        '.wimg-size-btn,.wimg-align-btn{padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text-muted);cursor:pointer;font-size:0.75rem;transition:all 0.15s;}' +
+        '.wimg-size-btn:hover,.wimg-align-btn:hover{border-color:var(--accent4);color:var(--text);}' +
+        '.wimg-size-btn.active,.wimg-align-btn.active{background:var(--accent4);color:#fff;border-color:var(--accent4);}' +
+      '</style>' +
+
       '<div id="wimg-preview" style="display:none;margin-bottom:12px;padding:10px;background:var(--surface2);border-radius:8px;text-align:center;">' +
-        '<img id="wimg-preview-img" style="max-width:100%;max-height:160px;border-radius:6px;">' +
+        '<img id="wimg-preview-img" style="max-height:180px;border-radius:6px;transition:width 0.2s;">' +
         '<div id="wimg-preview-info" style="font-size:0.7rem;color:var(--text-muted);margin-top:4px;"></div>' +
       '</div>' +
 
