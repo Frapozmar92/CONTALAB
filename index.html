@@ -17344,7 +17344,10 @@ function renderTemaReto(num, retoIdxOverride) {
   if (terminado) {
     html += '<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">' +
       '<span style="font-size:0.82rem;color:var(--text-muted);">' + correctas + ' de ' + nSubs + ' operaciones correctas</span>' +
-      (idx < retos.length - 1 ? '<button class="btn btn-primary btn-sm" onclick="renderTemaReto(' + num + ',' + (idx+1) + ')">Siguiente reto →</button>' : '') +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+        '<button class="btn btn-outline btn-sm" onclick="generarPDFCuentasAnuales(\'' + reto.id + '\',' + num + ')" style="font-size:0.75rem;color:var(--accent4);border-color:var(--accent4);">📄 Descargar Cuentas Anuales</button>' +
+        (idx < retos.length - 1 ? '<button class="btn btn-primary btn-sm" onclick="renderTemaReto(' + num + ',' + (idx+1) + ')">Siguiente reto →</button>' : '') +
+      '</div>' +
     '</div>';
   }
 
