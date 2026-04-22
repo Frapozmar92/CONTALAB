@@ -9077,6 +9077,164 @@ function _wInsBloque(i, tipo) {
 // ── Insertar media en el editor WYSIWYG ──────────────────────
 
 // ── Modal visual de selección de tamaño para vídeo ──────────
+// ── Modal para insertar imagen (subir desde PC o URL) ──────────
+function _wAbrirModalImagen(edIdx, edEl, savedRange) {
+  // Evitar duplicados
+  var old = document.getElementById('wimg-modal');
+  if (old) old.remove();
+
+  var modal = document.createElement('div');
+  modal.id = 'wimg-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99999;display:flex;align-items:center;justify-content:center;';
+  modal.innerHTML =
+    '<div style="background:var(--surface);border-radius:12px;padding:22px 24px;max-width:460px;width:92%;border:1px solid var(--border);box-shadow:0 20px 60px rgba(0,0,0,0.3);">' +
+      '<div style="font-family:\'Playfair Display\',serif;font-size:1.1rem;font-weight:700;margin-bottom:14px;">🖼 Insertar imagen</div>' +
+
+      // Opción 1: subir desde PC
+      '<div style="border:2px dashed var(--accent4);border-radius:10px;padding:18px;text-align:center;background:rgba(76,89,121,0.05);margin-bottom:14px;cursor:pointer;" ' +
+        'id="wimg-drop" ' +
+        'onclick="document.getElementById(\'wimg-file\').click()">' +
+        '<div style="font-size:1.6rem;margin-bottom:4px;">📁</div>' +
+        '<div style="font-size:0.88rem;font-weight:600;color:var(--text);margin-bottom:3px;">Subir desde tu ordenador</div>' +
+        '<div style="font-size:0.72rem;color:var(--text-muted);">Haz clic o arrastra aquí (JPG, PNG, GIF, WEBP · máx. 2 MB recomendado)</div>' +
+        '<input type="file" id="wimg-file" accept="image/*" style="display:none;">' +
+      '</div>' +
+
+      '<div style="text-align:center;font-size:0.72rem;color:var(--text-muted);margin:8px 0;">— o bien —</div>' +
+
+      // Opción 2: URL
+      '<div style="margin-bottom:10px;">' +
+        '<label style="display:block;font-size:0.78rem;color:var(--text-muted);margin-bottom:4px;">URL de la imagen (http/https)</label>' +
+        '<input type="url" id="wimg-url" placeholder="https://..." ' +
+          'style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:0.85rem;outline:none;box-sizing:border-box;">' +
+      '</div>' +
+
+      '<div style="margin-bottom:14px;">' +
+        '<label style="display:block;font-size:0.78rem;color:var(--text-muted);margin-bottom:4px;">Texto alternativo (opcional)</label>' +
+        '<input type="text" id="wimg-alt" placeholder="Descripción breve de la imagen" ' +
+          'style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:0.85rem;outline:none;box-sizing:border-box;">' +
+      '</div>' +
+
+      '<div id="wimg-preview" style="display:none;margin-bottom:12px;padding:10px;background:var(--surface2);border-radius:8px;text-align:center;">' +
+        '<img id="wimg-preview-img" style="max-width:100%;max-height:160px;border-radius:6px;">' +
+        '<div id="wimg-preview-info" style="font-size:0.7rem;color:var(--text-muted);margin-top:4px;"></div>' +
+      '</div>' +
+
+      '<div style="display:flex;gap:8px;justify-content:flex-end;">' +
+        '<button id="wimg-cancel" style="padding:7px 14px;border-radius:6px;background:var(--surface2);color:var(--text-muted);border:1px solid var(--border);cursor:pointer;font-size:0.82rem;">Cancelar</button>' +
+        '<button id="wimg-insert" style="padding:7px 16px;border-radius:6px;background:var(--accent4);color:#fff;border:none;cursor:pointer;font-size:0.82rem;font-weight:600;" disabled>Insertar</button>' +
+      '</div>' +
+    '</div>';
+
+  document.body.appendChild(modal);
+
+  var _dataURL = null;   // contenido de la imagen subida (base64)
+  var _fileName = '';
+  var _fileSize = 0;
+
+  var fileInput = document.getElementById('wimg-file');
+  var urlInput  = document.getElementById('wimg-url');
+  var altInput  = document.getElementById('wimg-alt');
+  var previewEl = document.getElementById('wimg-preview');
+  var previewImg = document.getElementById('wimg-preview-img');
+  var previewInfo = document.getElementById('wimg-preview-info');
+  var btnInsert = document.getElementById('wimg-insert');
+  var btnCancel = document.getElementById('wimg-cancel');
+  var dropZone  = document.getElementById('wimg-drop');
+
+  function actualizarEstado() {
+    var hayURL = urlInput.value.trim().length > 0;
+    var hayArchivo = !!_dataURL;
+    btnInsert.disabled = !(hayURL || hayArchivo);
+  }
+
+  function cargarArchivo(file) {
+    if (!file) return;
+    if (!/^image\//.test(file.type)) {
+      alert('El archivo seleccionado no es una imagen.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      if (!confirm('La imagen pesa ' + (file.size / 1024 / 1024).toFixed(1) + ' MB. Esto puede ralentizar la app. ¿Continuar?')) return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      _dataURL = ev.target.result;
+      _fileName = file.name;
+      _fileSize = file.size;
+      previewImg.src = _dataURL;
+      previewInfo.textContent = file.name + ' · ' + (file.size / 1024).toFixed(1) + ' KB';
+      previewEl.style.display = 'block';
+      urlInput.value = ''; // mutuamente excluyente
+      actualizarEstado();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  fileInput.addEventListener('change', function(e) {
+    var f = e.target.files && e.target.files[0];
+    if (f) cargarArchivo(f);
+  });
+
+  // Drag & drop
+  dropZone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    dropZone.style.background = 'rgba(76,89,121,0.15)';
+  });
+  dropZone.addEventListener('dragleave', function() {
+    dropZone.style.background = 'rgba(76,89,121,0.05)';
+  });
+  dropZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    dropZone.style.background = 'rgba(76,89,121,0.05)';
+    var f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) cargarArchivo(f);
+  });
+
+  urlInput.addEventListener('input', function() {
+    if (urlInput.value.trim()) {
+      _dataURL = null;
+      previewEl.style.display = 'none';
+    }
+    actualizarEstado();
+  });
+
+  function cerrar() {
+    var m = document.getElementById('wimg-modal');
+    if (m) m.remove();
+  }
+
+  btnCancel.addEventListener('click', cerrar);
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) cerrar();
+  });
+
+  btnInsert.addEventListener('click', function() {
+    var src = _dataURL || urlInput.value.trim();
+    if (!src) return;
+    var alt = altInput.value.trim();
+    var html = '<div style="margin:10px 0;text-align:center;">' +
+      '<img src="' + src + '" alt="' + alt.replace(/"/g,'&quot;') + '" ' +
+        'style="max-width:100%;height:auto;border-radius:8px;border:1px solid var(--border);">' +
+      (alt ? '<div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;font-style:italic;">' + alt + '</div>' : '') +
+    '</div><p><br></p>';
+
+    cerrar();
+
+    // Restaurar selección en el editor e insertar
+    if (edEl) edEl.focus();
+    try {
+      if (savedRange) {
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(savedRange);
+      }
+    } catch(_e) {}
+    document.execCommand('insertHTML', false, html);
+    if (typeof _wOnInput === 'function') _wOnInput(edIdx);
+  });
+}
+
 function _wVideoSizeModal(edIdx, embedUrl, watchUrl, titulo, savedRange) {
   var prev = document.getElementById('wvideo-size-overlay');
   if (prev) prev.remove();
