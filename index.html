@@ -9233,6 +9233,48 @@ function _wAbrirModalImagen(edIdx, edEl, savedRange) {
     actualizarEstado();
   });
 
+  // Tamaño — botones preset
+  var sizeBtns = modal.querySelectorAll('.wimg-size-btn');
+  var rangeEl  = document.getElementById('wimg-size-range');
+  var numEl    = document.getElementById('wimg-size-num');
+  function aplicarTamano(pct) {
+    _sizePct = Math.max(10, Math.min(100, parseInt(pct,10) || 50));
+    rangeEl.value = _sizePct;
+    numEl.value = _sizePct;
+    // marcar botón preset activo si coincide
+    sizeBtns.forEach(function(b) {
+      b.classList.toggle('active', parseInt(b.dataset.size,10) === _sizePct);
+    });
+    // actualizar preview
+    if (previewImg && previewEl.style.display !== 'none') {
+      previewImg.style.width = _sizePct + '%';
+    }
+  }
+  sizeBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() { aplicarTamano(btn.dataset.size); });
+  });
+  rangeEl.addEventListener('input', function() { aplicarTamano(rangeEl.value); });
+  numEl.addEventListener('input',   function() { aplicarTamano(numEl.value); });
+
+  // Alineación
+  var alignBtns = modal.querySelectorAll('.wimg-align-btn');
+  alignBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      _align = btn.dataset.align;
+      alignBtns.forEach(function(b){ b.classList.toggle('active', b === btn); });
+    });
+  });
+
+  // Ajuste inicial del preview al mostrarse
+  var _origSetPreview = cargarArchivo; // mantenemos referencia por claridad
+  // Observador simple: al cambiar display del preview, aplicar tamaño
+  var _prevObs = new MutationObserver(function() {
+    if (previewEl.style.display !== 'none') {
+      previewImg.style.width = _sizePct + '%';
+    }
+  });
+  _prevObs.observe(previewEl, { attributes:true, attributeFilter:['style'] });
+
   function cerrar() {
     var m = document.getElementById('wimg-modal');
     if (m) m.remove();
