@@ -16706,7 +16706,7 @@ function resetRetoForm() {
   _retoSubCounter = 0; _retoSubs = []; _retoFilaCounter = 0; _retoEditingId = null;
   _retoAlts = {}; _retoAltFilaCounter = {};
   document.getElementById('pfr-titulo').value      = '';
-  document.getElementById('pfr-intro').value       = '';
+  document.getElementById('pfr-intro').innerHTML   = '';
   document.getElementById('pfr-pista').value       = '';
   document.getElementById('pfr-tema').value        = '';
   document.getElementById('pfr-fecha-limite').value = '';
@@ -16732,7 +16732,7 @@ function editarReto(id) {
 
   // Rellenar campos de cabecera
   document.getElementById('pfr-titulo').value     = reto.titulo     || '';
-  document.getElementById('pfr-intro').value      = reto.intro      || '';
+  document.getElementById('pfr-intro').innerHTML  = reto.intro      || '';
   document.getElementById('pfr-pista').value      = reto.pista      || '';
   document.getElementById('pfr-tema').value       = reto.tema       || '';
   document.getElementById('pfr-fecha-limite').value = reto.fechaLimite || '';
