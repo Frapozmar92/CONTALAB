@@ -9178,15 +9178,12 @@ function _wInsMedia(i, tipo) {
   var html = '';
 
   if (tipo === 'img') {
-    var url = prompt('URL de la imagen:');
-    if (!url || !url.trim()) return;
-    url = url.trim();
-    var alt = prompt('Texto alternativo (opcional):') || '';
-    html = '<div style="margin:10px 0;text-align:center;">' +
-      '<img src="' + url + '" alt="' + alt + '" ' +
-        'style="max-width:100%;height:auto;border-radius:8px;border:1px solid var(--border);">' +
-      (alt ? '<div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;font-style:italic;">' + alt + '</div>' : '') +
-    '</div><p><br></p>';
+    // Guardar cursor antes de abrir selector/prompt
+    var _savedRange = null;
+    var _sel = window.getSelection();
+    if (_sel && _sel.rangeCount > 0) _savedRange = _sel.getRangeAt(0).cloneRange();
+    _wAbrirModalImagen(i, ed, _savedRange);
+    return; // inserción diferida
 
   } else if (tipo === 'video') {
     var url = prompt('URL del vídeo de YouTube:\n(youtube.com/watch?v=... · youtu.be/... · youtube.com/shorts/...)');
