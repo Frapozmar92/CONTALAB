@@ -8068,7 +8068,7 @@ function renderTemaEjercicios(num) {
 
   var tKey = 't' + num;
   var ejsProf = (state.ejerciciosProfesor || []).filter(function(e) {
-    return (!e.tipo || e.tipo === 'ejercicio') && e.tema === tKey;
+    return (!e.tipo || e.tipo === 'ejercicio' || e.tipo === 'matfin') && e.tema === tKey;
   });
 
   cont.innerHTML =
