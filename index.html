@@ -12672,7 +12672,7 @@ function _matfinRender() {
           '<textarea id="mf-txt-' + s.sid + '" rows="2" placeholder="Ej: Calcula el montante obtenido al invertir 10.000 € al 4% anual durante 3 años en régimen de capitalización compuesta." ' +
             'style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:0.85rem;font-family:inherit;outline:none;box-sizing:border-box;resize:vertical;">' + esc(s.texto||'') + '</textarea>' +
         '</div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr 120px;gap:10px;">' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr 120px 150px;gap:10px;">' +
           '<div>' +
             '<label style="display:block;font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;">Solución (valor exacto)</label>' +
             '<input type="number" step="any" id="mf-sol-' + s.sid + '" value="' + (s.solucion===''||s.solucion===undefined?'':s.solucion) + '" placeholder="Ej: 11248.64" ' +
@@ -12691,6 +12691,22 @@ function _matfinRender() {
               }).join('') +
             '</select>' +
           '</div>' +
+          '<div>' +
+            '<label style="display:block;font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;">Régimen</label>' +
+            '<select id="mf-cap-' + s.sid + '" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:0.85rem;outline:none;box-sizing:border-box;">' +
+              '<option value="simple"' +    (s.tipoCap==='simple'    ?' selected':'') + '>Cap. simple</option>' +
+              '<option value="compuesta"' + (s.tipoCap==='compuesta' ?' selected':'') + '>Cap. compuesta</option>' +
+              '<option value="otro"' +      (s.tipoCap==='otro'      ?' selected':'') + '>Otro</option>' +
+            '</select>' +
+          '</div>' +
+        '</div>' +
+        // Procedimiento de solución
+        '<div style="margin-top:10px;">' +
+          '<label style="display:block;font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;">' +
+            'Procedimiento de solución <span style="font-weight:400;">(opcional — se muestra al alumno cuando responde)</span>' +
+          '</label>' +
+          '<textarea id="mf-proc-' + s.sid + '" rows="3" placeholder="Ej:\nDatos: C = 10.000 €; i = 0,04; t = 3 años.\nFórmula (cap. compuesta): Cn = C · (1 + i)^t\nCn = 10.000 · (1,04)^3 = 10.000 · 1,124864 = 11.248,64 €" ' +
+            'style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:0.82rem;font-family:\'IBM Plex Mono\',monospace;outline:none;box-sizing:border-box;resize:vertical;line-height:1.5;">' + esc(s.procedimiento||'') + '</textarea>' +
         '</div>' +
       '</div>'
     );
