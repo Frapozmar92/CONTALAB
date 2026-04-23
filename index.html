@@ -12649,6 +12649,12 @@ function _matfinFlush() {
     if (eu) s.unidad        = eu.value;
     if (ec) s.tipoCap       = ec.value;
     if (ep) s.procedimiento = ep.value;
+    var eC = document.getElementById('mf-C-'   + s.sid);
+    var eI = document.getElementById('mf-i-'   + s.sid);
+    var eT = document.getElementById('mf-t-'   + s.sid);
+    if (eC) s.capital = eC.value === '' ? '' : parseFloat(eC.value);
+    if (eI) s.interes = eI.value === '' ? '' : parseFloat(eI.value);
+    if (eT) s.tiempo  = eT.value === '' ? '' : parseFloat(eT.value);
   });
 }
 
