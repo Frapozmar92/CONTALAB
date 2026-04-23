@@ -9097,6 +9097,90 @@ function _wInsBloque(i, tipo) {
   _wOnInput(i);
 }
 
+// ── Manejo inteligente de Enter dentro de los cuadros (def/ejemplo/nota/adv/rec/cod) ──
+// Dentro de un cuadro: Enter = salto de línea (<br>) sin crear otro cuadro.
+// Enter dos veces sobre una línea en blanco al final → sale del cuadro a un párrafo nuevo.
+// Shift+Enter sigue funcionando siempre como salto de línea natural.
+(function() {
+  var BLOQUES_SEL = '.def-box,.ejemplo-box,.bloque-nota,.bloque-advertencia,.bloque-recuerda,.bloque-codigo';
+
+  function _encontrarBloqueContenedor(node) {
+    while (node && node !== document) {
+      if (node.nodeType === 1 && node.matches && node.matches(BLOQUES_SEL)) return node;
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter' || e.shiftKey) return;
+    var target = e.target;
+    // Solo dentro de editores WYSIWYG
+    if (!(target && target.classList && target.classList.contains('wysiwyg-editor'))) return;
+
+    var sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return;
+    var range = sel.getRangeAt(0);
+    var bloque = _encontrarBloqueContenedor(range.startContainer);
+    if (!bloque) return;
+
+    // ── Comprobar si el cursor está en una línea en blanco al final del bloque:
+    //    en ese caso, salir del cuadro y crear un <p><br></p> a continuación.
+    var textoBloque = bloque.textContent || '';
+    var cursorAlFinal = (function() {
+      try {
+        var r = range.cloneRange();
+        r.selectNodeContents(bloque);
+        r.setStart(range.endContainer, range.endOffset);
+        // Si no queda más texto desde el cursor hasta el final del bloque, estamos al final
+        return r.toString().replace(/\s+$/, '') === '';
+      } catch(_) { return false; }
+    })();
+
+    // Detectar si la última "línea visible" está vacía: miramos el último <br> o el último char
+    var lineaEnBlanco = (function() {
+      // Obtener el texto de la última línea: desde el último \n o <br>
+      var html = bloque.innerHTML || '';
+      var ultimo = html.split(/<br\s*\/?>/i).pop();
+      // limpiar etiquetas y &nbsp;
+      var tmp = document.createElement('div');
+      tmp.innerHTML = ultimo;
+      return (tmp.textContent || '').replace(/\u00A0/g,' ').trim() === '';
+    })();
+
+    if (cursorAlFinal && lineaEnBlanco) {
+      // Salir del bloque → insertar <p><br></p> después
+      e.preventDefault();
+      var p = document.createElement('p');
+      p.innerHTML = '<br>';
+      if (bloque.nextSibling) bloque.parentNode.insertBefore(p, bloque.nextSibling);
+      else                    bloque.parentNode.appendChild(p);
+      // Situar cursor dentro del nuevo <p>
+      var newRange = document.createRange();
+      newRange.setStart(p, 0);
+      newRange.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(newRange);
+      // Limpiar posible <br> de relleno en el final del bloque
+      var last = bloque.lastChild;
+      while (last && last.nodeType === 1 && last.tagName === 'BR') {
+        bloque.removeChild(last);
+        last = bloque.lastChild;
+      }
+      // Disparar input para que el estado inline guarde
+      bloque.dispatchEvent(new Event('input', { bubbles: true }));
+      return;
+    }
+
+    // Dentro del bloque → salto de línea simple (<br>), nunca crear otro cuadro
+    e.preventDefault();
+    document.execCommand('insertLineBreak');
+    // Fallback si insertLineBreak no está soportado
+    // (la mayoría de navegadores modernos sí lo soporta)
+    target.dispatchEvent(new Event('input', { bubbles: true }));
+  }, true);
+})();
+
 // Insertar enlace
 
 // ── Insertar media en el editor WYSIWYG ──────────────────────
