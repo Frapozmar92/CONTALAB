@@ -12766,7 +12766,9 @@ function guardarEjercicioProf() {
         texto: s.texto.trim(),
         solucion: +s.solucion,
         tolerancia: Math.abs(+s.tolerancia || 0),
-        unidad: s.unidad || ''
+        unidad: s.unidad || '',
+        tipoCap: s.tipoCap || 'simple',
+        procedimiento: (s.procedimiento || '').trim()
       };
     });
     var ejDataMF = {
