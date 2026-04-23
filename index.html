@@ -12760,7 +12760,10 @@ function _matfinCargarDesdeEj(ej) {
       tolerancia: s.tolerancia !== undefined ? s.tolerancia : 0.01,
       unidad: s.unidad || '€',
       tipoCap: s.tipoCap || 'simple',
-      procedimiento: s.procedimiento || ''
+      procedimiento: s.procedimiento || '',
+      capital: s.capital !== undefined && s.capital !== null ? s.capital : '',
+      interes: s.interes !== undefined && s.interes !== null ? s.interes : '',
+      tiempo:  s.tiempo  !== undefined && s.tiempo  !== null ? s.tiempo  : ''
     });
   });
 }
