@@ -14494,6 +14494,188 @@ function renderEjProfAlumnoList(fromPanel, temaFiltro) {
   initEjercicioRows(todos);
 }
 
+// ============================================================
+// VISTA ALUMNO — Ejercicios de Matemáticas Financieras (Tema 6)
+// ============================================================
+function buildMatfinEjercicioHTML(ej, ejIdx) {
+  var subs  = ej.subenunciados || [];
+  var nSubs = subs.length;
+  if (!nSubs) return '';
+
+  if (!alumnoEjState[ej.id]) {
+    alumnoEjState[ej.id] = { subActual: 0, subResps: [], resultados: [] };
+  }
+  var est = alumnoEjState[ej.id];
+  var terminado = est.subActual >= nSubs && est.resultados.length >= nSubs;
+
+  if (!window._ejVista) window._ejVista = {};
+  if (window._ejVista[ej.id] === undefined) {
+    window._ejVista[ej.id] = est.subActual < nSubs ? est.subActual : nSubs - 1;
+  }
+  var vistaIdx = window._ejVista[ej.id];
+  if (vistaIdx < 0) vistaIdx = 0;
+  if (vistaIdx >= nSubs) vistaIdx = nSubs - 1;
+  window._ejVista[ej.id] = vistaIdx;
+
+  var correctas = (est.resultados||[]).filter(function(r){ return r === 'ok'; }).length;
+  var estadoBadge = terminado
+    ? (correctas === nSubs
+        ? '<span style="padding:3px 10px;border-radius:10px;font-size:0.72rem;background:rgba(46,139,110,0.1);color:var(--green);border:1px solid rgba(46,139,110,0.3);">&#x2705; ' + correctas + '/' + nSubs + '</span>'
+        : '<span style="padding:3px 10px;border-radius:10px;font-size:0.72rem;background:rgba(192,57,43,0.07);color:var(--red);border:1px solid rgba(192,57,43,0.2);">&#x26A0; ' + correctas + '/' + nSubs + '</span>')
+    : '<span style="padding:3px 10px;border-radius:10px;font-size:0.72rem;background:var(--surface2);color:var(--text-muted);border:1px solid var(--border);">' + est.subActual + '/' + nSubs + '</span>';
+
+  // Dots
+  var dots = subs.map(function(_, di) {
+    var r = est.resultados[di];
+    var col = r === 'ok' ? 'var(--green)' : r === 'ko' ? 'var(--red)' : (di === vistaIdx ? 'var(--accent4)' : 'var(--border)');
+    var ring = di === vistaIdx ? 'box-shadow:0 0 0 2px var(--accent4);' : '';
+    return '<div onclick="ejVistaIr(\'' + ej.id + '\',' + di + ')" ' +
+      'style="flex:1;height:6px;border-radius:3px;background:' + col + ';cursor:pointer;' + ring + '"></div>';
+  }).join('');
+
+  var sub = subs[vistaIdx];
+  var res = est.resultados[vistaIdx];
+  var isResuelto = (res === 'ok' || res === 'ko');
+  var isActivo   = !isResuelto && !terminado;
+  var unidad     = sub.unidad || '';
+  var unidadSuf  = unidad ? ' ' + unidad : '';
+
+  var body = '';
+  if (isActivo) {
+    body =
+      '<div style="display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;">' +
+        '<label style="font-size:0.82rem;color:var(--text-muted);">Tu respuesta:</label>' +
+        '<input type="number" step="any" id="mfin-resp-' + ej.id + '-' + vistaIdx + '" ' +
+          'placeholder="Introduce un número" ' +
+          'onkeydown="if(event.key===\'Enter\'){confirmarMatfinSub(\'' + ej.id + '\',' + vistaIdx + ');}" ' +
+          'style="flex:1;min-width:140px;padding:8px 12px;border:1px solid var(--border);border-radius:7px;background:var(--bg);color:var(--text);font-size:0.95rem;font-family:\'IBM Plex Mono\',monospace;outline:none;">' +
+        (unidad ? '<span style="font-family:\'IBM Plex Mono\',monospace;color:var(--text-muted);">' + unidad + '</span>' : '') +
+        '<button class="btn btn-primary btn-sm" onclick="confirmarMatfinSub(\'' + ej.id + '\',' + vistaIdx + ')">' +
+          (vistaIdx < nSubs - 1 ? 'Comprobar y continuar &#x2192;' : 'Comprobar y finalizar &#x2713;') +
+        '</button>' +
+      '</div>';
+  } else if (isResuelto) {
+    var sr = est.subResps[vistaIdx] || {};
+    var resp = sr.respuesta !== undefined ? sr.respuesta : '—';
+    var colorBg = res === 'ok' ? 'rgba(46,139,110,0.07)' : 'rgba(192,57,43,0.05)';
+    var colorBd = res === 'ok' ? 'rgba(46,139,110,0.25)' : 'rgba(192,57,43,0.2)';
+    body =
+      '<div style="margin-top:10px;padding:10px 14px;border:1px solid ' + colorBd + ';border-radius:8px;background:' + colorBg + ';">' +
+        '<div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:3px;">Tu respuesta:</div>' +
+        '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:1rem;font-weight:700;">' + resp + unidadSuf + '</div>' +
+        (res === 'ko'
+          ? '<div style="margin-top:8px;padding-top:8px;border-top:1px dashed ' + colorBd + ';">' +
+              '<div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:3px;">Solución correcta:</div>' +
+              '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:1rem;font-weight:700;color:var(--green);">' + sub.solucion + unidadSuf + '</div>' +
+              (sub.tolerancia ? '<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">Tolerancia admitida: ±' + sub.tolerancia + unidadSuf + '</div>' : '') +
+            '</div>'
+          : '') +
+        '<div style="margin-top:10px;">' +
+          '<button class="btn btn-outline btn-sm" onclick="resetMatfinSub(\'' + ej.id + '\',' + vistaIdx + ')" style="font-size:0.75rem;color:var(--text-muted);">&#x21BA; Reintentar este paso</button>' +
+        '</div>' +
+      '</div>';
+  }
+
+  var navHTML =
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;">' +
+      '<button class="btn btn-outline btn-sm" onclick="ejVistaIr(\'' + ej.id + '\',' + (vistaIdx-1) + ')" ' +
+        (vistaIdx === 0 ? 'disabled style="opacity:0.3;cursor:not-allowed;"' : '') + '>&#x2190; Anterior</button>' +
+      '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.72rem;color:var(--text-muted);">' + (vistaIdx+1) + ' / ' + nSubs + '</span>' +
+      '<button class="btn btn-outline btn-sm" onclick="ejVistaIr(\'' + ej.id + '\',' + (vistaIdx+1) + ')" ' +
+        (vistaIdx >= nSubs - 1 ? 'disabled style="opacity:0.3;cursor:not-allowed;"' : '') + '>Siguiente &#x2192;</button>' +
+    '</div>';
+
+  var finalHTML = terminado && vistaIdx === nSubs - 1 ? (
+    '<div style="margin-top:16px;padding:14px 18px;border-radius:10px;text-align:center;background:' +
+      (correctas===nSubs?'rgba(46,139,110,0.07)':'rgba(184,134,11,0.07)') +
+    ';border:1px solid ' + (correctas===nSubs?'rgba(46,139,110,0.25)':'rgba(184,134,11,0.25)') + ';">' +
+      '<div style="font-family:\'Playfair Display\',serif;font-size:1.4rem;font-weight:900;color:' +
+        (correctas===nSubs?'var(--green)':'var(--accent)') + ';">' + correctas + '/' + nSubs + '</div>' +
+      '<div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">subapartados correctos</div>' +
+      '<button class="btn btn-outline btn-sm" style="margin-top:12px;" onclick="resetRespuesta(\'' + ej.id + '\')">&#x21BA; Reintentar</button>' +
+    '</div>'
+  ) : '';
+
+  var tagsHtml = (ej.tags||[]).map(function(t){
+    return '<span style="padding:2px 7px;border-radius:10px;background:rgba(76,89,121,0.08);border:1px solid rgba(76,89,121,0.2);color:var(--accent4);font-size:0.65rem;">' + t + '</span>';
+  }).join('');
+
+  return '<div class="ej-prof-card" id="ejcard-' + ej.id + '" style="margin-bottom:20px;">' +
+    '<div style="padding:18px 20px 12px;">' +
+      '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">' +
+        '<span class="ej-prof-badge" style="background:rgba(76,89,121,0.1);color:var(--accent4);">🧮 Mat. Fin. ' + (ejIdx+1) + '</span>' +
+        tagsHtml + estadoBadge +
+      '</div>' +
+      '<div class="ej-prof-intro">' + (ej.intro||'') + '</div>' +
+      '<div style="display:flex;gap:4px;margin-top:12px;">' + dots + '</div>' +
+    '</div>' +
+    '<div style="padding:0 20px 18px;">' +
+      '<div class="ej-sub-card ' + (isActivo?'activo':'resuelto') + '" style="margin-bottom:0;">' +
+        '<div class="ej-sub-header">' +
+          '<div class="ej-sub-num ' + (isActivo?'activo':(res==='ok'?'resuelto':'ko')) + '">' + (vistaIdx+1) + '</div>' +
+          '<div class="ej-sub-enunciado">' + (sub.texto||'') + '</div>' +
+          (isActivo
+            ? '<span class="ej-sub-badge activo">Tu turno</span>'
+            : (res === 'ok'
+                ? '<span class="ej-sub-badge resuelto">&#x2713; Correcto</span>'
+                : '<span class="ej-sub-badge" style="background:rgba(192,57,43,0.08);color:var(--red);border:1px solid rgba(192,57,43,0.2);">&#x2717; Incorrecto</span>')) +
+        '</div>' +
+        '<div class="ej-sub-body">' + body + '</div>' +
+      '</div>' +
+      navHTML + finalHTML +
+    '</div>' +
+  '</div>';
+}
+
+function confirmarMatfinSub(ejId, subIdx) {
+  var ej = (state.ejerciciosProfesor||[]).find(function(e){ return String(e.id) === String(ejId); });
+  if (!ej) return;
+  var sub = (ej.subenunciados||[])[subIdx];
+  if (!sub) return;
+  var inp = document.getElementById('mfin-resp-' + ejId + '-' + subIdx);
+  if (!inp || inp.value === '' || isNaN(parseFloat(inp.value))) {
+    flash('⚠ Introduce un número válido', 'var(--red)');
+    return;
+  }
+  var respuesta = parseFloat(inp.value);
+  var sol = +sub.solucion;
+  var tol = Math.abs(+sub.tolerancia || 0);
+  var ok  = Math.abs(respuesta - sol) <= tol + 1e-9;
+
+  if (!alumnoEjState[ej.id]) alumnoEjState[ej.id] = { subActual: 0, subResps: [], resultados: [] };
+  var est = alumnoEjState[ej.id];
+  est.resultados[subIdx] = ok ? 'ok' : 'ko';
+  est.subResps[subIdx]   = { respuesta: respuesta };
+  // Avanzar subActual al menos hasta subIdx+1 (no retroceder)
+  if (subIdx + 1 > est.subActual) est.subActual = subIdx + 1;
+
+  // Vista: avanzar al siguiente si no es el último, si no permanecer
+  if (subIdx < (ej.subenunciados||[]).length - 1) {
+    window._ejVista[ej.id] = subIdx + 1;
+  }
+
+  // Persistir
+  if (typeof autoGuardarProgreso === 'function') autoGuardarProgreso();
+
+  // Re-render
+  if (typeof ejVistaIr === 'function') {
+    ejVistaIr(ej.id, window._ejVista[ej.id]);
+  } else {
+    renderEjProfAlumnoList();
+  }
+  flash(ok ? '✓ Respuesta correcta' : '✗ Respuesta incorrecta', ok ? 'var(--green)' : 'var(--red)');
+}
+
+function resetMatfinSub(ejId, subIdx) {
+  var est = alumnoEjState[ejId];
+  if (!est) return;
+  est.resultados[subIdx] = undefined;
+  est.subResps[subIdx]   = undefined;
+  window._ejVista[ejId]  = subIdx;
+  if (typeof autoGuardarProgreso === 'function') autoGuardarProgreso();
+  ejVistaIr(ejId, subIdx);
+}
+
 function buildEjercicioHTML(ej, ejIdx) {
   // ── Rama Matemáticas Financieras ──
   if (ej.tipo === 'matfin') return buildMatfinEjercicioHTML(ej, ejIdx);
