@@ -12608,7 +12608,11 @@ function _matfinAdd(preset) {
     tolerancia:    preset && preset.tolerancia !== undefined ? preset.tolerancia : 0.01,
     unidad:        preset && preset.unidad     || '€',
     tipoCap:       preset && preset.tipoCap    || 'simple', // 'simple' | 'compuesta'
-    procedimiento: preset && preset.procedimiento || ''
+    procedimiento: preset && preset.procedimiento || '',
+    // Parámetros opcionales para representación gráfica
+    capital:       preset && preset.capital !== undefined ? preset.capital : '',
+    interes:       preset && preset.interes !== undefined ? preset.interes : '',
+    tiempo:        preset && preset.tiempo  !== undefined ? preset.tiempo  : ''
   });
   _matfinRender();
 }
