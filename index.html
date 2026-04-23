@@ -14672,6 +14672,32 @@ function buildMatfinEjercicioHTML(ej, ejIdx) {
     var resp = sr.respuesta !== undefined ? sr.respuesta : '—';
     var colorBg = res === 'ok' ? 'rgba(46,139,110,0.07)' : 'rgba(192,57,43,0.05)';
     var colorBd = res === 'ok' ? 'rgba(46,139,110,0.25)' : 'rgba(192,57,43,0.2)';
+
+    // Procedimiento de solución — se muestra al alumno cuando responde (acierte o falle)
+    var procHTML = '';
+    var tipoCapLabel = sub.tipoCap === 'compuesta' ? 'Capitalización compuesta'
+                    : sub.tipoCap === 'simple'     ? 'Capitalización simple'
+                    : '';
+    if (sub.procedimiento && sub.procedimiento.trim()) {
+      // Convertir saltos de línea a <br> y escapar HTML
+      var procTexto = esc(sub.procedimiento).replace(/\n/g, '<br>');
+      procHTML =
+        '<details open style="margin-top:10px;border:1px solid rgba(76,89,121,0.25);border-radius:8px;background:rgba(76,89,121,0.04);overflow:hidden;">' +
+          '<summary style="padding:8px 12px;cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--accent4);user-select:none;">' +
+            '📝 Ver procedimiento de solución' + (tipoCapLabel ? ' · ' + tipoCapLabel : '') +
+          '</summary>' +
+          '<div style="padding:10px 14px;border-top:1px solid rgba(76,89,121,0.2);font-family:\'IBM Plex Mono\',monospace;font-size:0.82rem;line-height:1.6;color:var(--text);white-space:pre-wrap;">' +
+            procTexto +
+          '</div>' +
+        '</details>';
+    } else if (tipoCapLabel) {
+      // Si no hay procedimiento escrito por el profesor, mostrar al menos el régimen aplicable
+      procHTML =
+        '<div style="margin-top:10px;font-size:0.75rem;color:var(--text-muted);font-style:italic;">' +
+          '📝 Régimen aplicable: ' + tipoCapLabel +
+        '</div>';
+    }
+
     body =
       '<div style="margin-top:10px;padding:10px 14px;border:1px solid ' + colorBd + ';border-radius:8px;background:' + colorBg + ';">' +
         '<div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:3px;">Tu respuesta:</div>' +
@@ -14683,6 +14709,7 @@ function buildMatfinEjercicioHTML(ej, ejIdx) {
               (sub.tolerancia ? '<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">Tolerancia admitida: ±' + sub.tolerancia + unidadSuf + '</div>' : '') +
             '</div>'
           : '') +
+        procHTML +
         '<div style="margin-top:10px;">' +
           '<button class="btn btn-outline btn-sm" onclick="resetMatfinSub(\'' + ej.id + '\',' + vistaIdx + ')" style="font-size:0.75rem;color:var(--text-muted);">&#x21BA; Reintentar este paso</button>' +
         '</div>' +
