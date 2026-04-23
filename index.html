@@ -3500,11 +3500,21 @@ resetProfForm = function() {
                 </div>
               </div>
 
-              <!-- SUBENUNCIADOS -->
-              <div class="prof-field" style="margin-top:8px;">
+              <!-- SUBENUNCIADOS — CONTABILIDAD (oculto si tema = 6) -->
+              <div class="prof-field" id="pf-subs-contab" style="margin-top:8px;">
                 <label class="prof-label" style="margin-bottom:10px;">Subenunciados y asientos *</label>
                 <div id="pf-subenunciados-list"></div>
                 <button class="btn btn-outline btn-sm" onclick="addProfSubenunciado()" style="margin-top:10px;width:100%;border-style:dashed;">＋ Añadir subenunciado</button>
+              </div>
+
+              <!-- SUBAPARTADOS — MATEMÁTICAS FINANCIERAS (solo tema 6) -->
+              <div class="prof-field" id="pf-subs-matfin" style="margin-top:8px;display:none;">
+                <label class="prof-label" style="margin-bottom:10px;">
+                  Subapartados (Matemáticas Financieras · Capitalización) *
+                  <span style="display:block;font-weight:400;font-size:0.75rem;color:var(--text-muted);margin-top:3px;">Introduce el enunciado, la solución numérica esperada y la tolerancia admitida.</span>
+                </label>
+                <div id="pf-matfin-list"></div>
+                <button class="btn btn-outline btn-sm" onclick="_matfinAdd()" style="margin-top:10px;width:100%;border-style:dashed;">＋ Añadir subapartado</button>
               </div>
 
               <div id="pf-error" style="color:var(--red);font-size:0.8rem;margin:10px 0;padding:8px 12px;background:rgba(192,57,43,0.06);border:1px solid rgba(192,57,43,0.2);border-radius:7px;display:none;"></div>
