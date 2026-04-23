@@ -12637,10 +12637,14 @@ function _matfinFlush() {
     var es = document.getElementById('mf-sol-' + s.sid);
     var eo = document.getElementById('mf-tol-' + s.sid);
     var eu = document.getElementById('mf-uni-' + s.sid);
-    if (et) s.texto      = et.value;
-    if (es) s.solucion   = es.value === '' ? '' : parseFloat(es.value);
-    if (eo) s.tolerancia = eo.value === '' ? 0  : parseFloat(eo.value);
-    if (eu) s.unidad     = eu.value;
+    var ec = document.getElementById('mf-cap-' + s.sid);
+    var ep = document.getElementById('mf-proc-' + s.sid);
+    if (et) s.texto         = et.value;
+    if (es) s.solucion      = es.value === '' ? '' : parseFloat(es.value);
+    if (eo) s.tolerancia    = eo.value === '' ? 0  : parseFloat(eo.value);
+    if (eu) s.unidad        = eu.value;
+    if (ec) s.tipoCap       = ec.value;
+    if (ep) s.procedimiento = ep.value;
   });
 }
 
