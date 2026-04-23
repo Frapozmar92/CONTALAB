@@ -20866,15 +20866,13 @@ function renderTemasList(temas) {
         'ondrop="temaDrop(event,' + idx + ')" ' +
         'ondragend="temaDragEnd(event)" ' +
         'style="' +
-          'display:grid;grid-template-columns:28px 60px 1fr 130px 88px 88px;gap:8px;align-items:center;' +
+          'display:grid;grid-template-columns:28px 60px 1fr 50px 170px;gap:8px;align-items:center;' +
           'padding:8px 12px;background:' + (activo ? 'var(--surface)' : 'var(--surface2)') + ';' +
           'border:1px solid var(--border);border-radius:8px;margin-bottom:5px;' +
           'opacity:' + (activo ? '1' : '0.52') + ';transition:opacity 0.15s,box-shadow 0.15s;cursor:default;">' +
 
         // Handle drag ↕
         '<div title="Arrastrar para reordenar" style="cursor:grab;color:var(--text-muted);font-size:1rem;text-align:center;user-select:none;line-height:1;">⠿</div>' +
-
-        // (icono eliminado)
 
         // Número
         '<input type="number" value="' + t.num + '" min="1" max="99" ' +
@@ -20886,26 +20884,16 @@ function renderTemasList(temas) {
           'style="width:100%;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:0.85rem;outline:none;box-sizing:border-box;" ' +
           'oninput="setTemaTitulo(' + idx + ',this.value)">' +
 
-        // Descripción
-        '<input type="text" value="' + esc(t.descripcion || '') + '" placeholder="Descripción…" ' +
-          'style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text-muted);font-size:0.78rem;outline:none;box-sizing:border-box;" ' +
-          'oninput="setTemaDesc(' + idx + ',this.value)">' +
-
-        // Color + botones ↑↓
-        '<div style="display:flex;align-items:center;gap:4px;">' +
-          '<input type="color" value="' + (t.color || '#3a5bbf') + '" ' +
-            'style="width:30px;height:26px;border:1px solid var(--border);border-radius:5px;cursor:pointer;padding:2px;flex-shrink:0;" ' +
-            'oninput="setTemaColor(' + idx + ',this.value)" title="Color">' +
-          '<div style="display:flex;flex-direction:column;gap:2px;">' +
-            '<button onclick="moverTema(' + idx + ',-1)" ' +
-              'style="padding:0 6px;height:12px;line-height:10px;border-radius:3px;border:1px solid var(--border);background:var(--bg);cursor:pointer;font-size:0.6rem;color:var(--text-muted);"' +
-              (isFirst ? ' disabled style="padding:0 6px;height:12px;line-height:10px;border-radius:3px;border:1px solid var(--border);background:var(--surface2);cursor:not-allowed;font-size:0.6rem;opacity:0.35;"' : '') +
-              '>▲</button>' +
-            '<button onclick="moverTema(' + idx + ',1)" ' +
-              'style="padding:0 6px;height:12px;line-height:10px;border-radius:3px;border:1px solid var(--border);background:var(--bg);cursor:pointer;font-size:0.6rem;color:var(--text-muted);"' +
-              (isLast ? ' disabled style="padding:0 6px;height:12px;line-height:10px;border-radius:3px;border:1px solid var(--border);background:var(--surface2);cursor:not-allowed;font-size:0.6rem;opacity:0.35;"' : '') +
-              '>▼</button>' +
-          '</div>' +
+        // Botones ↑↓
+        '<div style="display:flex;flex-direction:column;gap:2px;justify-self:center;">' +
+          '<button onclick="moverTema(' + idx + ',-1)" ' +
+            'style="padding:0 6px;height:12px;line-height:10px;border-radius:3px;border:1px solid var(--border);background:var(--bg);cursor:pointer;font-size:0.6rem;color:var(--text-muted);"' +
+            (isFirst ? ' disabled style="padding:0 6px;height:12px;line-height:10px;border-radius:3px;border:1px solid var(--border);background:var(--surface2);cursor:not-allowed;font-size:0.6rem;opacity:0.35;"' : '') +
+            '>▲</button>' +
+          '<button onclick="moverTema(' + idx + ',1)" ' +
+            'style="padding:0 6px;height:12px;line-height:10px;border-radius:3px;border:1px solid var(--border);background:var(--bg);cursor:pointer;font-size:0.6rem;color:var(--text-muted);"' +
+            (isLast ? ' disabled style="padding:0 6px;height:12px;line-height:10px;border-radius:3px;border:1px solid var(--border);background:var(--surface2);cursor:not-allowed;font-size:0.6rem;opacity:0.35;"' : '') +
+            '>▼</button>' +
         '</div>' +
 
         // Acciones
@@ -20915,9 +20903,6 @@ function renderTemasList(temas) {
             'title="' + (activo ? 'Ocultar' : 'Mostrar') + '">' +
             (activo ? '👁 Ocultar' : '👁 Mostrar') +
           '</button>' +
-          '<button onclick="abrirEditorTeoria(' + idx + ')" ' +
-            'style="padding:4px 7px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-size:0.7rem;color:var(--text);" ' +
-            'title="Editar teoría del tema">📖 Teoría</button>' +
           '<button onclick="eliminarTema(' + idx + ')" ' +
             'style="padding:4px 7px;border-radius:5px;border:1px solid rgba(192,57,43,0.3);background:rgba(192,57,43,0.05);cursor:pointer;font-size:0.7rem;color:var(--red);" ' +
             'title="Eliminar">🗑</button>' +
