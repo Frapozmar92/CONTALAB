@@ -14420,9 +14420,9 @@ function renderEjProfAlumnoList(fromPanel, temaFiltro) {
   };
   var TEMA_COLORS = { t10:'#3a5bbf', t11:'#2e8b6e', t12:'#b8860b', t13:'#c0392b', t14:'#2e8b6e', t15:'#3a5bbf' };
 
-  // Solo ejercicios con subenunciados
+  // Solo ejercicios con subenunciados (incluye matemáticas financieras)
   var todos = (state.ejerciciosProfesor || []).filter(function(e) {
-    return !e.tipo || e.tipo === 'ejercicio';
+    return !e.tipo || e.tipo === 'ejercicio' || e.tipo === 'matfin';
   });
 
   // Si venimos desde un tema, filtrar y renderizar en el contenedor del tema
