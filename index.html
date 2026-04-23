@@ -3456,7 +3456,7 @@ resetProfForm = function() {
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
                 <div class="prof-field">
                   <label class="prof-label">Asignar a tema</label>
-                  <select class="prof-select" id="pf-tema">
+                  <select class="prof-select" id="pf-tema" onchange="_matfinToggleByTema()">
                     <option value="">— Sin tema específico —</option>
                     <option value="t10">TEMA 10 · El Método Contable</option>
                     <option value="t11">TEMA 11 · El Plan General Contable</option>
