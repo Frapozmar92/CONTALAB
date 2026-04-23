@@ -14832,6 +14832,44 @@ function buildMatfinEjercicioHTML(ej, ejIdx) {
         '</div>';
     }
 
+    // Representación gráfica (si el profesor ha rellenado C, i, t y el régimen es simple o compuesta)
+    var graphHTML = '';
+    var gC = typeof sub.capital === 'number' ? sub.capital : (sub.capital !== '' && sub.capital !== null && sub.capital !== undefined ? parseFloat(sub.capital) : NaN);
+    var gI = typeof sub.interes === 'number' ? sub.interes : (sub.interes !== '' && sub.interes !== null && sub.interes !== undefined ? parseFloat(sub.interes) : NaN);
+    var gT = typeof sub.tiempo  === 'number' ? sub.tiempo  : (sub.tiempo  !== '' && sub.tiempo  !== null && sub.tiempo  !== undefined ? parseFloat(sub.tiempo)  : NaN);
+    if (isFinite(gC) && isFinite(gI) && isFinite(gT) && gC > 0 && gT > 0 && (sub.tipoCap === 'simple' || sub.tipoCap === 'compuesta')) {
+      var svg = buildMatfinSVG(gC, gI, gT, sub.tipoCap);
+      var cnSimple    = gC * (1 + (gI/100) * gT);
+      var cnCompuesta = gC * Math.pow(1 + gI/100, gT);
+      var difCap = cnCompuesta - cnSimple;
+      graphHTML =
+        '<details open style="margin-top:10px;border:1px solid rgba(46,139,110,0.25);border-radius:8px;background:rgba(46,139,110,0.04);overflow:hidden;">' +
+          '<summary style="padding:8px 12px;cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--green);user-select:none;">' +
+            '📈 Ver representación gráfica (simple vs. compuesta)' +
+          '</summary>' +
+          '<div style="padding:10px 10px 12px;border-top:1px solid rgba(46,139,110,0.2);">' +
+            svg +
+            '<div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-family:\'IBM Plex Mono\',monospace;font-size:0.72rem;">' +
+              '<div style="padding:6px 8px;background:rgba(184,134,11,0.08);border:1px solid rgba(184,134,11,0.25);border-radius:6px;">' +
+                '<div style="color:var(--text-muted);">Cap. simple</div>' +
+                '<div style="font-weight:700;color:#b8860b;">' + cnSimple.toLocaleString('es-ES',{maximumFractionDigits:2}) + ' €</div>' +
+              '</div>' +
+              '<div style="padding:6px 8px;background:rgba(46,139,110,0.08);border:1px solid rgba(46,139,110,0.25);border-radius:6px;">' +
+                '<div style="color:var(--text-muted);">Cap. compuesta</div>' +
+                '<div style="font-weight:700;color:var(--green);">' + cnCompuesta.toLocaleString('es-ES',{maximumFractionDigits:2}) + ' €</div>' +
+              '</div>' +
+              '<div style="padding:6px 8px;background:rgba(76,89,121,0.08);border:1px solid rgba(76,89,121,0.25);border-radius:6px;">' +
+                '<div style="color:var(--text-muted);">Diferencia</div>' +
+                '<div style="font-weight:700;color:var(--accent4);">+' + difCap.toLocaleString('es-ES',{maximumFractionDigits:2}) + ' €</div>' +
+              '</div>' +
+            '</div>' +
+            '<div style="margin-top:8px;font-size:0.72rem;color:var(--text-muted);font-style:italic;line-height:1.5;">' +
+              '💡 La línea <b style="color:' + (sub.tipoCap==='simple'?'#b8860b':'var(--green)') + ';">continua</b> es el régimen del ejercicio; la discontinua, el otro régimen, para que puedas comparar visualmente cómo crece el capital.' +
+            '</div>' +
+          '</div>' +
+        '</details>';
+    }
+
     body =
       '<div style="margin-top:10px;padding:10px 14px;border:1px solid ' + colorBd + ';border-radius:8px;background:' + colorBg + ';">' +
         '<div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:3px;">Tu respuesta:</div>' +
