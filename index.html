@@ -12718,6 +12718,27 @@ function _matfinRender() {
           '<textarea id="mf-proc-' + s.sid + '" rows="3" placeholder="Ej:\nDatos: C = 10.000 €; i = 0,04; t = 3 años.\nFórmula (cap. compuesta): Cn = C · (1 + i)^t\nCn = 10.000 · (1,04)^3 = 10.000 · 1,124864 = 11.248,64 €" ' +
             'style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:0.82rem;font-family:\'IBM Plex Mono\',monospace;outline:none;box-sizing:border-box;resize:vertical;line-height:1.5;">' + esc(s.procedimiento||'') + '</textarea>' +
         '</div>' +
+        // Parámetros para representación gráfica (opcionales)
+        '<div style="margin-top:10px;padding:10px 12px;border:1px dashed rgba(76,89,121,0.3);border-radius:8px;background:rgba(76,89,121,0.03);">' +
+          '<div style="font-size:0.72rem;color:var(--accent4);font-weight:700;margin-bottom:6px;">📈 Parámetros para gráfica <span style="font-weight:400;color:var(--text-muted);">(opcional — si los rellenas, el alumno verá la curva de crecimiento)</span></div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">' +
+            '<div>' +
+              '<label style="display:block;font-size:0.7rem;color:var(--text-muted);margin-bottom:3px;">Capital inicial C (€)</label>' +
+              '<input type="number" step="any" id="mf-C-' + s.sid + '" value="' + (s.capital===''||s.capital===undefined?'':s.capital) + '" placeholder="10000" ' +
+                'style="width:100%;padding:6px 9px;border:1px solid var(--border);border-radius:5px;background:var(--bg);color:var(--text);font-size:0.8rem;outline:none;box-sizing:border-box;font-family:\'IBM Plex Mono\',monospace;">' +
+            '</div>' +
+            '<div>' +
+              '<label style="display:block;font-size:0.7rem;color:var(--text-muted);margin-bottom:3px;">Tanto anual i (%)</label>' +
+              '<input type="number" step="any" id="mf-i-' + s.sid + '" value="' + (s.interes===''||s.interes===undefined?'':s.interes) + '" placeholder="4" ' +
+                'style="width:100%;padding:6px 9px;border:1px solid var(--border);border-radius:5px;background:var(--bg);color:var(--text);font-size:0.8rem;outline:none;box-sizing:border-box;font-family:\'IBM Plex Mono\',monospace;">' +
+            '</div>' +
+            '<div>' +
+              '<label style="display:block;font-size:0.7rem;color:var(--text-muted);margin-bottom:3px;">Tiempo t (años)</label>' +
+              '<input type="number" step="any" id="mf-t-' + s.sid + '" value="' + (s.tiempo===''||s.tiempo===undefined?'':s.tiempo) + '" placeholder="3" ' +
+                'style="width:100%;padding:6px 9px;border:1px solid var(--border);border-radius:5px;background:var(--bg);color:var(--text);font-size:0.8rem;outline:none;box-sizing:border-box;font-family:\'IBM Plex Mono\',monospace;">' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
       '</div>'
     );
   }).join('');
