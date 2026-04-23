@@ -14413,12 +14413,13 @@ function renderEjProfAlumnoList(fromPanel, temaFiltro) {
   // fromPanel: si true/undefined → renderizar en #ejprof-alumno-list (panel centralizado)
   // temaFiltro: 't10'..'t15' → renderizar en #ejprof-tema-{temaFiltro} (dentro del tema)
   var TEMA_NOMBRES = {
+    't6':'Tema 6 · Matemáticas Financieras',
     't10':'Tema 10 · El Método Contable', 't11':'Tema 11 · El Plan General Contable',
     't12':'Tema 12 · Las Existencias',    't13':'Tema 13 · Operaciones de Compra',
     't14':'Tema 14 · Operaciones de Venta','t15':'Tema 15 · El Ciclo Contable',
     '':'Sin tema asignado'
   };
-  var TEMA_COLORS = { t10:'#3a5bbf', t11:'#2e8b6e', t12:'#b8860b', t13:'#c0392b', t14:'#2e8b6e', t15:'#3a5bbf' };
+  var TEMA_COLORS = { t6:'#4c5979', t10:'#3a5bbf', t11:'#2e8b6e', t12:'#b8860b', t13:'#c0392b', t14:'#2e8b6e', t15:'#3a5bbf' };
 
   // Solo ejercicios con subenunciados (incluye matemáticas financieras)
   var todos = (state.ejerciciosProfesor || []).filter(function(e) {
