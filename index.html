@@ -12727,7 +12727,9 @@ function _matfinCargarDesdeEj(ej) {
       texto: s.texto || '',
       solucion: s.solucion !== undefined && typeof s.solucion === 'number' ? s.solucion : (s.solucionNumerica !== undefined ? s.solucionNumerica : ''),
       tolerancia: s.tolerancia !== undefined ? s.tolerancia : 0.01,
-      unidad: s.unidad || '€'
+      unidad: s.unidad || '€',
+      tipoCap: s.tipoCap || 'simple',
+      procedimiento: s.procedimiento || ''
     });
   });
 }
