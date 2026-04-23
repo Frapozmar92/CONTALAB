@@ -14495,6 +14495,9 @@ function renderEjProfAlumnoList(fromPanel, temaFiltro) {
 }
 
 function buildEjercicioHTML(ej, ejIdx) {
+  // ── Rama Matemáticas Financieras ──
+  if (ej.tipo === 'matfin') return buildMatfinEjercicioHTML(ej, ejIdx);
+
   var subs  = ej.subenunciados || [];
   var nSubs = subs.length;
   if (!nSubs) return '';
