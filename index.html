@@ -12781,6 +12781,9 @@ function resetProfForm() {
   // Limpiar evaluable
   var evalCb = document.getElementById('pf-evaluable');
   if (evalCb) { evalCb.checked = false; toggleEvaluableCE('pf'); }
+  // Reset matfin
+  if (typeof _matfinReset === 'function') _matfinReset();
+  if (typeof _matfinToggleByTema === 'function') _matfinToggleByTema();
   // Start with one blank subenunciado
   addProfSubenunciado();
 }
