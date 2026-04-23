@@ -12822,6 +12822,19 @@ function editarEjercicioProf(id) {
   var lista = document.getElementById('pf-subenunciados-list');
   if (lista) lista.innerHTML = '';
   profSubenunciados = []; profSubCounter = 0; profFilaCounter = 0;
+
+  // ── Rama Matemáticas Financieras ──
+  if (ej.tipo === 'matfin') {
+    if (typeof _matfinCargarDesdeEj === 'function') _matfinCargarDesdeEj(ej);
+    if (typeof _matfinToggleByTema === 'function') _matfinToggleByTema();
+    var titleElMF = document.getElementById('pf-form-title');
+    if (titleElMF) titleElMF.textContent = '✏️ Editando ejercicio (Mat. Financieras)';
+    return;
+  }
+  // Tema no es 6 → asegurar visibilidad del bloque contable
+  if (typeof _matfinReset === 'function') _matfinReset();
+  if (typeof _matfinToggleByTema === 'function') _matfinToggleByTema();
+
   var subs = ej.subenunciados || (ej.solucion ? [{ texto: ej.enunciado || '', pista: ej.pista || '', solucion: ej.solucion }] : []);
   subs.forEach(function(s) {
     addProfSubenunciado({ texto: s.texto, pista: s.pista, fecha: s.fecha || '', solucion: s.solucion || [], asientos: s.asientos || null, filas: s.solucion ? s.solucion.map(function(f){ return { tipo: f.tipo, cuenta: f.cuenta, nombre: f.nombre, debe: f.debe, haber: f.haber }; }) : [] });
