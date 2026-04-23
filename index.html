@@ -12603,10 +12603,12 @@ function _matfinAdd(preset) {
   var sid = ++_matfinCounter;
   _matfinSubs.push({
     sid: sid,
-    texto:      preset && preset.texto      || '',
-    solucion:   preset && preset.solucion   !== undefined ? preset.solucion   : '',
-    tolerancia: preset && preset.tolerancia !== undefined ? preset.tolerancia : 0.01,
-    unidad:     preset && preset.unidad     || '€'
+    texto:         preset && preset.texto      || '',
+    solucion:      preset && preset.solucion   !== undefined ? preset.solucion   : '',
+    tolerancia:    preset && preset.tolerancia !== undefined ? preset.tolerancia : 0.01,
+    unidad:        preset && preset.unidad     || '€',
+    tipoCap:       preset && preset.tipoCap    || 'simple', // 'simple' | 'compuesta'
+    procedimiento: preset && preset.procedimiento || ''
   });
   _matfinRender();
 }
