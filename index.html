@@ -22721,6 +22721,368 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 })();
 </script>
+<!-- ============================================================ -->
+<!-- 🪄 MODAL: GENERADOR ASISTIDO DE EJERCICIOS DE CONTABILIDAD  -->
+<!-- ============================================================ -->
+<div id="gen-ej-modal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.65);align-items:flex-start;justify-content:center;padding:20px 16px;overflow-y:auto;" onclick="if(event.target===this)genCerrarModal()">
+  <div style="width:100%;max-width:780px;background:var(--surface);border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,0.35);padding:30px 32px 24px;position:relative;margin:20px auto;">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
+      <div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:900;color:var(--text);">🪄 Generador de ejercicios</div>
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">Configura las opciones y se creará un ejercicio realista con asientos contables correctos</div>
+      </div>
+      <button onclick="genCerrarModal()" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--bg);color:var(--text-muted);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>
+
+    <!-- SECCIÓN 1: EMPRESA -->
+    <div style="margin-bottom:18px;padding:16px 18px;background:var(--bg);border:1px solid var(--border);border-radius:10px;">
+      <div style="font-size:0.68rem;font-weight:700;color:var(--accent4);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;">🏢 Empresa</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 130px;gap:12px;">
+        <div>
+          <label style="display:block;font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;">Nombre (vacío = aleatorio)</label>
+          <input id="gen-empresa-nombre" type="text" placeholder="Ej: ALFA, IBERSA…" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:0.85rem;outline:none;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="display:block;font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;">Sector de actividad</label>
+          <select id="gen-sector" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:0.85rem;outline:none;box-sizing:border-box;">
+            <option value="comercio">Comercio / Distribución</option>
+            <option value="servicios">Servicios profesionales</option>
+            <option value="hosteleria">Hostelería / Restauración</option>
+            <option value="construccion">Construcción / Reformas</option>
+            <option value="informatica">Informática / Tecnología</option>
+            <option value="transporte">Transporte / Logística</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;">Forma jurídica</label>
+          <select id="gen-forma-jur" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:0.85rem;outline:none;box-sizing:border-box;">
+            <option value="SL">S.L.</option>
+            <option value="SA">S.A.</option>
+            <option value="aut">Autónomo/a</option>
+            <option value="CB">C.B.</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 2: PERIODO Y CONFIGURACIÓN -->
+    <div style="margin-bottom:18px;padding:16px 18px;background:var(--bg);border:1px solid var(--border);border-radius:10px;">
+      <div style="font-size:0.68rem;font-weight:700;color:var(--accent4);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;">📅 Periodo y configuración</div>
+      <div style="display:grid;grid-template-columns:1fr 100px 120px 80px;gap:12px;align-items:end;">
+        <div>
+          <label style="display:block;font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;">Mes</label>
+          <select id="gen-mes" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:0.85rem;outline:none;box-sizing:border-box;">
+            <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option>
+            <option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
+            <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
+            <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;">Año</label>
+          <input id="gen-anyo" type="number" value="2025" min="2020" max="2030" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:0.85rem;outline:none;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="display:block;font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;">Tipo IVA general</label>
+          <select id="gen-iva" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:0.85rem;outline:none;box-sizing:border-box;">
+            <option value="21">21 %</option>
+            <option value="10">10 %</option>
+            <option value="4">4 %</option>
+            <option value="0">Exento</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;">Nº operaciones</label>
+          <input id="gen-nops" type="number" value="6" min="3" max="15" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:0.85rem;outline:none;box-sizing:border-box;">
+        </div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 3: OPERACIONES -->
+    <div style="margin-bottom:20px;padding:16px 18px;background:var(--bg);border:1px solid var(--border);border-radius:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-size:0.68rem;font-weight:700;color:var(--accent4);text-transform:uppercase;letter-spacing:1.5px;">⚙️ Operaciones a incluir</div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="genNivelCambiar('basico')" id="gen-btn-basico" style="padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text-muted);font-size:0.7rem;cursor:pointer;" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'">🟢 Básico</button>
+          <button onclick="genNivelCambiar('medio')" id="gen-btn-medio" style="padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text-muted);font-size:0.7rem;cursor:pointer;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">🟡 Medio</button>
+          <button onclick="genNivelCambiar('avanzado')" id="gen-btn-avanzado" style="padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text-muted);font-size:0.7rem;cursor:pointer;" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='var(--border)'">🔴 Avanzado</button>
+          <button onclick="genSeleccionarTodas(true)" style="padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text-muted);font-size:0.7rem;cursor:pointer;">Todo</button>
+          <button onclick="genSeleccionarTodas(false)" style="padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text-muted);font-size:0.7rem;cursor:pointer;">Nada</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;">
+        <!-- Col 1 -->
+        <div>
+          <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin:6px 0 4px;letter-spacing:1px;">COMPRAS</div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-compraCred" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Compra a crédito</span></label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-compraCtado" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Compra al contado</span></label>
+          <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin:10px 0 4px;letter-spacing:1px;">VENTAS</div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-ventaCred" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Venta a crédito</span></label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-ventaCtado" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Venta al contado</span></label>
+          <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin:10px 0 4px;letter-spacing:1px;">DEVOLUCIONES</div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-devCompra" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Devolución de compra</span></label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-devVenta" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Devolución de venta</span></label>
+          <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin:10px 0 4px;letter-spacing:1px;">TESORERÍA</div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-cobroCliente" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Cobro de cliente</span></label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-pagoProveedor" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Pago a proveedor</span></label>
+        </div>
+        <!-- Col 2 -->
+        <div>
+          <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin:6px 0 4px;letter-spacing:1px;">GASTOS</div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-gastoAlquiler" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Gasto de alquiler</span></label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-gastoSuministros" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Gastos de suministros</span></label>
+          <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin:10px 0 4px;letter-spacing:1px;">PERSONAL</div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-nomina" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Nómina mensual</span></label>
+          <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin:10px 0 4px;letter-spacing:1px;">INMOVILIZADO</div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-inmovilizado" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Compra de inmovilizado</span></label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-amortizacion" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Dotación amortización</span></label>
+          <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin:10px 0 4px;letter-spacing:1px;">FINANCIERO / CIERRE</div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-prestamo" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Préstamo bancario</span></label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-varExistencias" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Variación de existencias</span></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- AVISO -->
+    <div style="padding:10px 14px;background:rgba(76,89,121,0.06);border:1px solid rgba(76,89,121,0.2);border-radius:8px;font-size:0.75rem;color:var(--text-muted);line-height:1.5;margin-bottom:18px;">
+      💡 El ejercicio generado rellena automáticamente el <strong>texto introductorio</strong>, los <strong>subenunciados</strong> con fechas y operaciones realistas, y los <strong>asientos contables correctos</strong>. Puedes editar cualquier campo antes de guardar.
+    </div>
+
+    <!-- Acciones -->
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="genCerrarModal()" class="btn btn-outline">Cancelar</button>
+      <button onclick="genEjercicio()" class="btn btn-primary" style="background:linear-gradient(135deg,var(--accent4),var(--accent));font-size:0.9rem;">🪄 Generar ejercicio</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// 🪄 GENERADOR ASISTIDO DE EJERCICIOS DE CONTABILIDAD
+// ============================================================
+(function() {
+
+var _GEN = {
+  nombres: ['ALFA','BETA','OMEGA','DELTA','SIGMA','NOVA','IBERIA','EURO','PENINSULAR','MERIDIONAL','ATLÁNTICO','VEGA','CENIT','AURORA','HELIOS','SERRANO','MONTES','PLAZA','RIVERA','SOLERA'],
+  meses: ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'],
+  mesesDias: [31,28,31,30,31,30,31,31,30,31,30,31],
+  sectores: {
+    comercio:    { productos:['material de oficina','productos electrónicos','artículos de papelería','material de construcción','productos alimenticios','artículos de ferretería'], proveedores:['Distribuciones García SL','Suministros Martínez SA','Almacenes Ruiz SL','Mayoristas Pérez SA','López e Hijos SL'], clientes:['Comercial Sánchez SL','Tiendas Gil SA','Distribuidora Gómez SL','El Almacén Fernández SL','Compras Rodríguez SA'], desc:'dedicada a la distribución de {p}' },
+    servicios:   { productos:['consultoría empresarial','asesoría fiscal','gestión de RRHH','mantenimiento industrial','limpieza y facility management'], proveedores:['Oficina Pérez SL','Materiales López SA','Suministros García SL','Tecnología Ruiz SL'], clientes:['Empresa Sánchez SA','Industrias Fernández SL','Proyectos Gil SA','Grupo Martínez SL'], desc:'dedicada a la prestación de servicios de {p}' },
+    hosteleria:  { productos:['restauración','catering y eventos','hostelería'], proveedores:['Distribuciones Alimentarias García SL','Bebidas y Licores Ruiz SA','Frutas Frescas Pérez SL'], clientes:['Eventos Corporativos Sánchez SL','Celebraciones Gil SA','Cáterin Gómez SL'], desc:'dedicada a la hostelería y restauración' },
+    construccion:{ productos:['construcción','reformas y rehabilitación','instalaciones'], proveedores:['Materiales García SA','Ferreterías Ruiz SL','Hormigones Pérez SA','Prefabricados López SL'], clientes:['Promotora Sánchez SA','Ayuntamiento de San Marcos','Comunidad Propietarios Las Flores','Inmobiliaria Gil SA'], desc:'dedicada a la construcción y obra civil' },
+    informatica: { productos:['desarrollo de software','consultoría IT','ciberseguridad','inteligencia artificial'], proveedores:['Tech Supplies García SL','Hardware López SA','Cloud Services Ruiz SL'], clientes:['Empresa Digital Sánchez SA','Grupo Tecnológico Fernández SL','StartUp Gil SL','Banca Online Martínez SA'], desc:'dedicada al desarrollo de software y consultoría tecnológica' },
+    transporte:  { productos:['transporte de mercancías','logística integral','almacenaje y distribución'], proveedores:['Recambios del Motor García SL','Combustibles Ruiz SA','Talleres Pérez SL'], clientes:['Logística Sánchez SA','Distribución Fernández SL','Importaciones Gil SA','Exportaciones Martínez SL'], desc:'dedicada al transporte de mercancías por carretera' }
+  }
+};
+
+function _rnd(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function _pick(arr){ return arr[_rnd(0,arr.length-1)]; }
+function _pickExcept(arr,exc){ var f=arr.filter(function(x){return x!==exc;}); return f.length?_pick(f):_pick(arr); }
+function _imp(min,max){ var r=_rnd(min,max), rd=r<1000?50:(r<5000?100:500); return Math.round(r/rd)*rd; }
+function _fmt2(n){ return Math.round(n*100)/100; }
+function _es(n){ return n.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function _fechaISO(y,m1,d){ return y+'-'+String(m1).padStart(2,'0')+'-'+String(d).padStart(2,'0'); }
+function _fechaTxt(y,m1,d){ return String(d).padStart(2,'0')+'/'+String(m1).padStart(2,'0')+'/'+y; }
+function _diasMes(m1,y){ var d=[31,(y%4===0?29:28),31,30,31,30,31,31,30,31,30,31]; return d[m1-1]; }
+function _generarDias(n,m1,y){
+  var max=_diasMes(m1,y), step=Math.floor(max/(n+1)), dias=[];
+  for(var i=0;i<n;i++){ dias.push(Math.min((i+1)*step+_rnd(0,Math.max(0,step-1)),max)); }
+  return dias;
+}
+
+window.genAbrirModal = function(){
+  var m=document.getElementById('gen-ej-modal');
+  if(m){ m.style.display='flex'; }
+  genNivelCambiar('medio');
+};
+window.genCerrarModal = function(){
+  var m=document.getElementById('gen-ej-modal');
+  if(m) m.style.display='none';
+};
+window.genSeleccionarTodas = function(v){
+  ['compraCred','compraCtado','ventaCred','ventaCtado','devCompra','devVenta','gastoAlquiler','gastoSuministros','nomina','inmovilizado','amortizacion','prestamo','varExistencias','cobroCliente','pagoProveedor'].forEach(function(id){
+    var el=document.getElementById('gen-op-'+id); if(el) el.checked=v;
+  });
+};
+window.genNivelCambiar = function(nivel){
+  genSeleccionarTodas(false);
+  var basicas=['compraCred','ventaCred','cobroCliente','pagoProveedor'];
+  var medias=['compraCtado','ventaCtado','gastoAlquiler','gastoSuministros','nomina'];
+  var avanzadas=['devCompra','devVenta','inmovilizado','amortizacion','prestamo','varExistencias'];
+  var sel= nivel==='basico'?basicas : nivel==='medio'?basicas.concat(medias) : basicas.concat(medias).concat(avanzadas);
+  sel.forEach(function(id){ var el=document.getElementById('gen-op-'+id); if(el) el.checked=true; });
+};
+
+window.genEjercicio = function(){
+  var nombreInput = (document.getElementById('gen-empresa-nombre')||{}).value||'';
+  var sector      = (document.getElementById('gen-sector')||{value:'comercio'}).value;
+  var formaJur    = (document.getElementById('gen-forma-jur')||{value:'SL'}).value;
+  var mesIdx      = parseInt((document.getElementById('gen-mes')||{value:'0'}).value)||0;
+  var anyo        = parseInt((document.getElementById('gen-anyo')||{value:'2025'}).value)||2025;
+  var ivaStr      = (document.getElementById('gen-iva')||{value:'21'}).value;
+  var nOps        = Math.max(3,Math.min(15,parseInt((document.getElementById('gen-nops')||{value:'6'}).value)||6));
+  var iva         = parseFloat(ivaStr)/100;
+  var month1      = mesIdx+1;
+  var mesNombre   = _GEN.meses[mesIdx];
+
+  var sec = _GEN.sectores[sector]||_GEN.sectores.comercio;
+  var empNombre = nombreInput.trim() || _pick(_GEN.nombres);
+  var sufijo = formaJur==='aut' ? '' : (' '+formaJur+'.');
+  var nombreCompleto = empNombre + sufijo;
+  var producto = _pick(sec.productos);
+  var descSector = sec.desc.replace('{p}',producto);
+  var prov1=_pick(sec.proveedores), prov2=_pickExcept(sec.proveedores,prov1);
+  var cli1=_pick(sec.clientes),     cli2=_pickExcept(sec.clientes,cli1);
+  var ivaLabel = ivaStr+'%';
+
+  var opIds=['compraCred','compraCtado','ventaCred','ventaCtado','devCompra','devVenta','gastoAlquiler','gastoSuministros','nomina','inmovilizado','amortizacion','prestamo','varExistencias','cobroCliente','pagoProveedor'];
+  var opsSel=opIds.filter(function(id){ var el=document.getElementById('gen-op-'+id); return el&&el.checked; });
+  if(!opsSel.length){ alert('Selecciona al menos una operación.'); return; }
+
+  // Build pool up to nOps, repeated if needed
+  var pool=[];
+  while(pool.length < nOps){ opsSel.forEach(function(op){ if(pool.length<nOps) pool.push(op); }); }
+  pool=pool.slice(0,nOps);
+  // Sort logically
+  var order=['prestamo','inmovilizado','compraCred','compraCtado','ventaCred','ventaCtado','gastoAlquiler','gastoSuministros','nomina','cobroCliente','pagoProveedor','devCompra','devVenta','amortizacion','varExistencias'];
+  pool.sort(function(a,b){ return order.indexOf(a)-order.indexOf(b); });
+
+  var dias=_generarDias(pool.length,month1,anyo);
+
+  // Pre-compute consistent amounts
+  var compraMonto  = _imp(2000,15000);
+  var ventaMonto   = _imp(3000,20000);
+  var alqMonto     = _imp(600,2500);
+  var sumMonto     = _imp(150,800);
+  var sueldo       = _imp(1500,3500);
+  var irpf         = _fmt2(sueldo*0.15);
+  var ssW          = _fmt2(sueldo*0.0635);
+  var ssE          = _fmt2(sueldo*0.30);
+  var neto         = _fmt2(sueldo-irpf-ssW);
+  var inmoMonto    = _imp(5000,30000);
+  var amortMens    = _fmt2(inmoMonto/60);
+  var prestamo     = _imp(20000,80000);
+  var exIni        = _imp(5000,20000);
+  var exFin        = _imp(2000,18000);
+  var devC         = _fmt2(compraMonto*(_rnd(10,25)/100));
+  var devV         = _fmt2(ventaMonto*(_rnd(10,20)/100));
+
+  function ivaOf(b){ return _fmt2(b*iva); }
+  function tot(b){ return _fmt2(b+ivaOf(b)); }
+
+  var operaciones = pool.map(function(op,idx){
+    var d=dias[idx], fi=_fechaISO(anyo,month1,d), ft=_fechaTxt(anyo,month1,d);
+    var txt='', filas=[], pista='';
+
+    if(op==='compraCred'){
+      var b=compraMonto, iv=ivaOf(b), tt=tot(b);
+      txt=ft+' — La empresa adquiere mercaderías a '+prov1+' por importe de '+_es(b)+' €, más IVA al '+ivaLabel+'. El pago queda aplazado a 30 días.';
+      pista='Las compras a crédito generan una deuda con el proveedor (cuenta 400).';
+      filas=[{tipo:'debe',cuenta:'600',nombre:'Compras de mercaderías',debe:b},{tipo:'debe',cuenta:'472',nombre:'H.P. IVA soportado',debe:iv},{tipo:'haber',cuenta:'400',nombre:'Proveedores',haber:tt}];
+    } else if(op==='compraCtado'){
+      var b=_imp(500,4000), iv=ivaOf(b), tt=tot(b);
+      txt=ft+' — Se adquieren mercaderías al contado a '+prov2+' por '+_es(b)+' € + IVA '+ivaLabel+'. Se paga mediante transferencia bancaria.';
+      pista='Las compras al contado se abonan en la cuenta de bancos (572).';
+      filas=[{tipo:'debe',cuenta:'600',nombre:'Compras de mercaderías',debe:b},{tipo:'debe',cuenta:'472',nombre:'H.P. IVA soportado',debe:iv},{tipo:'haber',cuenta:'572',nombre:'Bancos',haber:tt}];
+    } else if(op==='ventaCred'){
+      var b=ventaMonto, iv=ivaOf(b), tt=tot(b);
+      txt=ft+' — Se venden mercaderías a '+cli1+' por '+_es(b)+' € + IVA '+ivaLabel+'. El cobro queda aplazado a 60 días.';
+      pista='Las ventas a crédito generan un derecho de cobro con el cliente (cuenta 430).';
+      filas=[{tipo:'debe',cuenta:'430',nombre:'Clientes',debe:tt},{tipo:'haber',cuenta:'700',nombre:'Ventas de mercaderías',haber:b},{tipo:'haber',cuenta:'477',nombre:'H.P. IVA repercutido',haber:iv}];
+    } else if(op==='ventaCtado'){
+      var b=_imp(1000,8000), iv=ivaOf(b), tt=tot(b);
+      txt=ft+' — Se venden mercaderías al contado a '+cli2+' por '+_es(b)+' € + IVA '+ivaLabel+'. El importe se ingresa directamente en cuenta bancaria.';
+      pista='Las ventas al contado se cobran en bancos (572).';
+      filas=[{tipo:'debe',cuenta:'572',nombre:'Bancos',debe:tt},{tipo:'haber',cuenta:'700',nombre:'Ventas de mercaderías',haber:b},{tipo:'haber',cuenta:'477',nombre:'H.P. IVA repercutido',haber:iv}];
+    } else if(op==='devCompra'){
+      var b=devC, iv=ivaOf(b), tt=tot(b);
+      txt=ft+' — Se devuelven a '+prov1+' mercaderías por '+_es(b)+' € + IVA '+ivaLabel+' que resultaron defectuosas. Se minora la deuda pendiente.';
+      pista='Las devoluciones de compra usan la cuenta 608 y reducen el IVA soportado (472).';
+      filas=[{tipo:'debe',cuenta:'400',nombre:'Proveedores',debe:tt},{tipo:'haber',cuenta:'608',nombre:'Devoluciones de compras y op. similares',haber:b},{tipo:'haber',cuenta:'472',nombre:'H.P. IVA soportado',haber:iv}];
+    } else if(op==='devVenta'){
+      var b=devV, iv=ivaOf(b), tt=tot(b);
+      txt=ft+' — '+cli1+' devuelve mercaderías por '+_es(b)+' € + IVA '+ivaLabel+' al no ajustarse al pedido. Se minora el saldo del cliente.';
+      pista='Las devoluciones de venta usan la cuenta 708 y reducen el IVA repercutido (477).';
+      filas=[{tipo:'debe',cuenta:'708',nombre:'Devoluciones de ventas y op. similares',debe:b},{tipo:'debe',cuenta:'477',nombre:'H.P. IVA repercutido',debe:iv},{tipo:'haber',cuenta:'430',nombre:'Clientes',haber:tt}];
+    } else if(op==='gastoAlquiler'){
+      var b=alqMonto, iv=ivaOf(b), tt=tot(b);
+      txt=ft+' — Se paga por banco el alquiler mensual del local de negocio: '+_es(b)+' € + IVA '+ivaLabel+'.';
+      pista='El alquiler es un gasto del subgrupo 621 (Arrendamientos y cánones).';
+      filas=[{tipo:'debe',cuenta:'621',nombre:'Arrendamientos y cánones',debe:b},{tipo:'debe',cuenta:'472',nombre:'H.P. IVA soportado',debe:iv},{tipo:'haber',cuenta:'572',nombre:'Bancos',haber:tt}];
+    } else if(op==='gastoSuministros'){
+      var b=sumMonto, iv=ivaOf(b), tt=tot(b);
+      txt=ft+' — Se recibe y paga por banco la factura de suministros del mes (electricidad, agua, internet) por '+_es(b)+' € + IVA '+ivaLabel+'.';
+      pista='Los gastos de suministros se recogen en la cuenta 628.';
+      filas=[{tipo:'debe',cuenta:'628',nombre:'Suministros',debe:b},{tipo:'debe',cuenta:'472',nombre:'H.P. IVA soportado',debe:iv},{tipo:'haber',cuenta:'572',nombre:'Bancos',haber:tt}];
+    } else if(op==='nomina'){
+      txt=ft+' — Se contabiliza la nómina mensual. Sueldo bruto: '+_es(sueldo)+' €. Retención IRPF (15 %): '+_es(irpf)+' €. Cuota SS trabajador (6,35 %): '+_es(ssW)+' €. Cuota SS empresa (30 %): '+_es(ssE)+' €. Importe neto a percibir: '+_es(neto)+' €.';
+      pista='La nómina genera el gasto en la 640 y la deuda neta con el trabajador en la 465.';
+      filas=[{tipo:'debe',cuenta:'640',nombre:'Sueldos y salarios',debe:sueldo},{tipo:'debe',cuenta:'642',nombre:'Seguridad Social a cargo de la empresa',debe:ssE},{tipo:'haber',cuenta:'465',nombre:'Remuneraciones pendientes de pago',haber:neto},{tipo:'haber',cuenta:'4751',nombre:'H.P. retenciones e ingresos a cuenta',haber:irpf},{tipo:'haber',cuenta:'476',nombre:'Organismos de la SS, acreedores',haber:_fmt2(ssW+ssE)}];
+    } else if(op==='inmovilizado'){
+      var b=inmoMonto, iv=ivaOf(b), tt=tot(b);
+      var tipos=[['Maquinaria','213'],['Mobiliario','216'],['Equipos para procesos de información','217']];
+      var tpick=_pick(tipos);
+      txt=ft+' — La empresa adquiere '+tpick[0].toLowerCase()+' por '+_es(b)+' € + IVA '+ivaLabel+'. Se financia mediante préstamo bancario a largo plazo.';
+      pista='El inmovilizado material se recoge en el subgrupo 21. El préstamo va a la cuenta 170.';
+      filas=[{tipo:'debe',cuenta:tpick[1],nombre:tpick[0],debe:b},{tipo:'debe',cuenta:'472',nombre:'H.P. IVA soportado',debe:iv},{tipo:'haber',cuenta:'170',nombre:'Deudas a l/p con entidades de crédito',haber:tt}];
+    } else if(op==='amortizacion'){
+      txt=ft+' — Se dota la amortización mensual del inmovilizado material por el método lineal (vida útil: 5 años). Cuota mensual: '+_es(amortMens)+' €.';
+      pista='La amortización es un gasto (681) que acumula la depreciación del bien en la cuenta 281.';
+      filas=[{tipo:'debe',cuenta:'681',nombre:'Amortización del inmovilizado material',debe:amortMens},{tipo:'haber',cuenta:'281',nombre:'Amortización acumulada del inm. material',haber:amortMens}];
+    } else if(op==='prestamo'){
+      txt=ft+' — La entidad bancaria concede un préstamo de '+_es(prestamo)+' € a largo plazo. El importe se recibe en la cuenta corriente de la empresa.';
+      pista='Los préstamos a largo plazo recibidos se registran en la cuenta 170 como pasivo no corriente.';
+      filas=[{tipo:'debe',cuenta:'572',nombre:'Bancos',debe:prestamo},{tipo:'haber',cuenta:'170',nombre:'Deudas a l/p con entidades de crédito',haber:prestamo}];
+    } else if(op==='varExistencias'){
+      var dif=_fmt2(Math.abs(exFin-exIni)), sube=exFin>exIni;
+      txt=ft+' — Al cierre del periodo se realiza el inventario: existencias iniciales '+_es(exIni)+' €, existencias finales '+_es(exFin)+' €. Contabiliza la variación de existencias.';
+      pista='Si las existencias finales > iniciales se abona la 610; si son menores, se carga.';
+      filas=sube?[{tipo:'debe',cuenta:'300',nombre:'Mercaderías',debe:dif},{tipo:'haber',cuenta:'610',nombre:'Variación de existencias de mercaderías',haber:dif}]:[{tipo:'debe',cuenta:'610',nombre:'Variación de existencias de mercaderías',debe:dif},{tipo:'haber',cuenta:'300',nombre:'Mercaderías',haber:dif}];
+    } else if(op==='cobroCliente'){
+      var m=_imp(1000,Math.max(1000,ventaMonto));
+      txt=ft+' — '+cli1+' realiza una transferencia bancaria por '+_es(m)+' € en pago de facturas pendientes de cobro.';
+      pista='El cobro de clientes cancela el derecho de cobro (430) y aumenta la tesorería (572).';
+      filas=[{tipo:'debe',cuenta:'572',nombre:'Bancos',debe:m},{tipo:'haber',cuenta:'430',nombre:'Clientes',haber:m}];
+    } else if(op==='pagoProveedor'){
+      var m=_imp(1000,Math.max(1000,compraMonto));
+      txt=ft+' — Se ordena transferencia bancaria por '+_es(m)+' € a '+prov1+' para cancelar facturas vencidas.';
+      pista='El pago a proveedores cancela la deuda (400) y reduce la tesorería (572).';
+      filas=[{tipo:'debe',cuenta:'400',nombre:'Proveedores',debe:m},{tipo:'haber',cuenta:'572',nombre:'Bancos',haber:m}];
+    }
+    return txt ? {texto:txt, filas:filas, pista:pista, fecha:fi} : null;
+  }).filter(Boolean);
+
+  if(!operaciones.length){ alert('No se pudo generar ninguna operación con las opciones seleccionadas.'); return; }
+
+  // Build intro paragraph
+  var intro = 'La empresa '+nombreCompleto+', '+descSector+', realiza las siguientes operaciones durante el mes de '+mesNombre+' de '+anyo+'. Salvo indicación expresa, el tipo de IVA aplicable es del '+ivaLabel+'.';
+
+  genCerrarModal();
+  resetProfForm();
+
+  // Clear default empty subenunciado
+  var lista=document.getElementById('pf-subenunciados-list');
+  if(lista) lista.innerHTML='';
+  if(typeof profSubenunciados!=='undefined') profSubenunciados=[];
+  if(typeof profSubCounter!=='undefined')    profSubCounter=0;
+  if(typeof profFilaCounter!=='undefined')   profFilaCounter=0;
+
+  // Set intro
+  var introEl=document.getElementById('pf-enunciado');
+  if(introEl) introEl.value=intro;
+
+  // Add subenunciados
+  operaciones.forEach(function(op){ addProfSubenunciado(op); });
+
+  if(typeof flash==='function') flash('✅ Ejercicio generado con '+operaciones.length+' operaciones', 'var(--green)');
+};
+
+})();
+</script>
+
 </body>
 </html>
 </body>
