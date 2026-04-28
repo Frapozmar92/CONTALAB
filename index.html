@@ -3450,7 +3450,12 @@ resetProfForm = function() {
 
               <!-- METADATA -->
               <div class="prof-field">
-                <label class="prof-label">Texto introductorio *</label>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                  <label class="prof-label" style="margin:0;">Texto introductorio *</label>
+                  <button onclick="genAbrirModal()" style="display:flex;align-items:center;gap:6px;padding:5px 12px;border:1.5px solid rgba(76,89,121,0.4);border-radius:7px;background:rgba(76,89,121,0.06);color:var(--accent4);font-size:0.75rem;font-weight:600;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='rgba(76,89,121,0.12)'" onmouseout="this.style.background='rgba(76,89,121,0.06)'">
+                    🪄 Generar ejercicio automáticamente
+                  </button>
+                </div>
                 <textarea class="prof-textarea" id="pf-enunciado" placeholder="Contexto general del ejercicio. Ej: La empresa ALFA S.L., dedicada a la distribución de material de oficina, realiza las siguientes operaciones durante el mes de enero de 2024..."></textarea>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
