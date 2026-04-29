@@ -3010,9 +3010,9 @@ resetProfForm = function() {
     <!-- FORM ALUMNO -->
     <div class="login-form active" id="lform-alumno">
       <div class="login-field"><label class="login-label">Nombre y apellidos</label>
-        <input class="login-input" id="l-nombre" type="text" placeholder="Tu nombre completo" onkeydown="if(event.key==='Enter')loginAlumno()"></div>
+        <input class="login-input" id="l-nombre" type="text" placeholder="Tu nombre completo" onfocus="prewarmLoginFunction()" onkeydown="if(event.key==='Enter')loginAlumno()"></div>
       <div class="login-field"><label class="login-label">Contraseña</label>
-        <input class="login-input" id="l-pwd" type="password" placeholder="Tu contraseña" onkeydown="if(event.key==='Enter')loginAlumno()"></div>
+        <input class="login-input" id="l-pwd" type="password" placeholder="Tu contraseña" onfocus="prewarmLoginFunction()" onkeydown="if(event.key==='Enter')loginAlumno()"></div>
       <div class="login-error" id="l-error-alumno"></div>
       <button class="login-btn login-btn-primary" onclick="loginAlumno()">Entrar →</button>
       <div class="login-code-hint" style="margin-top:14px;">¿Primera vez? Regístrate con el <strong>código de clase</strong></div>
