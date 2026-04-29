@@ -20726,6 +20726,7 @@ async function guardarCalEventos() {
   try {
     await sbUpsert('config', { clave:'cal_eventos', valor: JSON.stringify(APP_DATA.calEventos||[]) }, 'clave');
   } catch(e) { /* silencioso, datos en memoria */ }
+  if (typeof cacheShSet === 'function') cacheShSet('calEventos', APP_DATA.calEventos || []);
   renderProximosEventos();
 }
 
