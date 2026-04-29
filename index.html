@@ -23436,7 +23436,7 @@ window.genEjercicio = function(){
   if(!operaciones.length){ alert('No se pudo generar ninguna operación con las opciones seleccionadas.'); return; }
 
   // Build intro paragraph
-  var intro = 'La empresa '+nombreCompleto+', '+descSector+', realiza las siguientes operaciones durante el mes de '+mesNombre+' de '+anyo+'. Salvo indicación expresa, el tipo de IVA aplicable es del '+ivaLabel+'.';
+  var intro = 'La empresa '+nombreCompleto+', '+descSector+', realiza las siguientes operaciones '+periodoTextoIntro+'. Salvo indicación expresa, el tipo de IVA aplicable es del '+ivaLabel+'.';
 
   genCerrarModal();
   resetProfForm();
