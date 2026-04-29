@@ -22987,6 +22987,24 @@ var _GEN_OPS = {
   ]
 };
 
+// Inyectar operaciones comunes (periodificación, deterioro, venta inmovilizado, moneda extranjera) en cada sector
+(function _inyectarOpsComunes(){
+  var sectoresConDivisas = ['comercio','servicios','informatica','transporte','construccion'];
+  Object.keys(_GEN_OPS).forEach(function(sec){
+    _GEN_OPS[sec] = _GEN_OPS[sec].concat(_OPS_COMUNES_INMO).concat(_OPS_COMUNES_CIERRE);
+    if(sectoresConDivisas.indexOf(sec) >= 0){
+      _GEN_OPS[sec] = _GEN_OPS[sec].concat(_OPS_COMUNES_DIVISAS);
+    }
+  });
+})();
+
+window.genTogglePeriodo = function(modo){
+  var pmes = document.getElementById('gen-pmes');
+  var pran = document.getElementById('gen-prango');
+  if(pmes) pmes.style.display = modo==='mes'   ? 'grid' : 'none';
+  if(pran) pran.style.display = modo==='rango' ? 'grid' : 'none';
+};
+
 window.genRenderOps = function(sector){
   var cont = document.getElementById('gen-ops-container');
   if(!cont) return;
