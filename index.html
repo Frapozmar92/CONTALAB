@@ -22812,37 +22812,10 @@ document.addEventListener('DOMContentLoaded', function(){
           <button onclick="genSeleccionarTodas(false)" style="padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text-muted);font-size:0.7rem;cursor:pointer;">Nada</button>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;">
-        <!-- Col 1 -->
-        <div>
-          <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin:6px 0 4px;letter-spacing:1px;">COMPRAS</div>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-compraCred" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Compra a crédito</span></label>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-compraCtado" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Compra al contado</span></label>
-          <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin:10px 0 4px;letter-spacing:1px;">VENTAS</div>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-ventaCred" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Venta a crédito</span></label>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-ventaCtado" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Venta al contado</span></label>
-          <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin:10px 0 4px;letter-spacing:1px;">DEVOLUCIONES</div>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-devCompra" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Devolución de compra</span></label>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-devVenta" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Devolución de venta</span></label>
-          <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin:10px 0 4px;letter-spacing:1px;">TESORERÍA</div>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-cobroCliente" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Cobro de cliente</span></label>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-pagoProveedor" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Pago a proveedor</span></label>
-        </div>
-        <!-- Col 2 -->
-        <div>
-          <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin:6px 0 4px;letter-spacing:1px;">GASTOS</div>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-gastoAlquiler" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Gasto de alquiler</span></label>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-gastoSuministros" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Gastos de suministros</span></label>
-          <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin:10px 0 4px;letter-spacing:1px;">PERSONAL</div>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-nomina" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Nómina mensual</span></label>
-          <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin:10px 0 4px;letter-spacing:1px;">INMOVILIZADO</div>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-inmovilizado" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Compra de inmovilizado</span></label>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-amortizacion" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Dotación amortización</span></label>
-          <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin:10px 0 4px;letter-spacing:1px;">FINANCIERO / CIERRE</div>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-prestamo" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Préstamo bancario</span></label>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;"><input type="checkbox" id="gen-op-varExistencias" style="accent-color:var(--accent4);width:14px;height:14px;"><span style="font-size:0.8rem;">Variación de existencias</span></label>
-        </div>
+      <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:8px;font-style:italic;">
+        Las operaciones disponibles se adaptan al sector elegido. Marca todas las que quieras incluir en el ejercicio.
       </div>
+      <div id="gen-ops-container"></div>
     </div>
 
     <!-- AVISO -->
