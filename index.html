@@ -23041,8 +23041,15 @@ window.genEjercicio = function(){
   var cli1=_pick(sec.clientes),     cli2=_pickExcept(sec.clientes,cli1);
   var ivaLabel = ivaStr+'%';
 
-  var opIds=['compraCred','compraCtado','ventaCred','ventaCtado','devCompra','devVenta','gastoAlquiler','gastoSuministros','nomina','inmovilizado','amortizacion','prestamo','varExistencias','cobroCliente','pagoProveedor'];
-  var opsSel=opIds.filter(function(id){ var el=document.getElementById('gen-op-'+id); return el&&el.checked; });
+  // Leer las operaciones marcadas del contenedor dinámico (depende del sector seleccionado)
+  var contOps=document.getElementById('gen-ops-container');
+  var opsSel=[];
+  if(contOps){
+    contOps.querySelectorAll('input[type="checkbox"]:checked').forEach(function(el){
+      var id=el.id.replace(/^gen-op-/,'');
+      if(id) opsSel.push(id);
+    });
+  }
   if(!opsSel.length){ alert('Selecciona al menos una operación.'); return; }
 
   // Build pool up to nOps, repeated if needed
