@@ -16100,15 +16100,65 @@ async function confirmarNuevaPassword() {
 }
 
 // ── CARGAR DATOS Y ENTRAR COMO ALUMNO ────────────────────────
-// Estrategia de rendimiento:
-//   1) Datos COMPARTIDOS (ejercicios_profesor, config, ra_config, temas, eventos):
-//      se sirven desde cache local si están frescos (<5 min). Esto evita golpear
-//      Supabase repetidamente cuando muchos alumnos entran a la vez.
-//   2) Todas las consultas que sí van a la red se disparan en PARALELO con
-//      Promise.all en lugar de secuencialmente: pasamos de ~1.5 s a ~250 ms.
-async function cargarYEntrarAlumno(alumno) {
+// Estrategia de rendimiento (en orden de prioridad):
+//   0) BUNDLE: si el Edge Function login-alumno devolvió todos los datos en la
+//      misma respuesta, los usamos directamente — CERO consultas extra a Supabase.
+//   1) CACHE: si no hay bundle, intentamos servir los datos compartidos desde la
+//      cache local (TTL 5 min). Logins repetidos en el mismo navegador son instantáneos.
+//   2) PARALELO: lo que aún haga falta de red se dispara con Promise.all.
+async function cargarYEntrarAlumno(alumno, bundle) {
   showLoading('Cargando tu progreso…');
   try {
+    // ── 0) RUTA RÁPIDA: bundle del Edge Function ──────────────
+    if (bundle) {
+      // Progreso (filtrado por alumno_id)
+      var progResp = (bundle.progreso && bundle.progreso[0])
+        ? (bundle.progreso[0].datos || crearProgresoVacio())
+        : crearProgresoVacio();
+
+      // Respuestas
+      APP_DATA.respuestasAlumno = (bundle.respuestas || []).map(function(r){
+        return Object.assign({}, r.datos, { alumnoId: alumno.id, ejId: r.ejercicio_id, evaluacion: r.evaluacion, comentario: r.comentario, fecha: r.fecha, _dbId: r.id });
+      });
+
+      // Ejercicios del profesor
+      var ejArr = bundle.ejerciciosProfesor || [];
+      APP_DATA.ejerciciosProfesor = ejArr
+        .slice().sort(function(a,b){ var oa=(a.datos&&a.datos._orden!=null)?a.datos._orden:9999; var ob=(b.datos&&b.datos._orden!=null)?b.datos._orden:9999; return oa-ob; })
+        .map(function(e){ return e.datos; });
+      cacheShSet('ejerciciosProfesor', APP_DATA.ejerciciosProfesor);
+
+      // Config: extraer claves específicas
+      var cfg = bundle.config || [];
+      var cfgByClave = {};
+      cfg.forEach(function(c){ cfgByClave[c.clave] = c.valor; });
+
+      if (cfgByClave['codigo_clase']) APP_DATA.codigoClase = cfgByClave['codigo_clase'];
+
+      try { APP_DATA.raConfig = cfgByClave['ra_config'] ? JSON.parse(cfgByClave['ra_config']) : { ra: RA_CE_DEFAULT }; }
+      catch(e){ APP_DATA.raConfig = { ra: RA_CE_DEFAULT }; }
+
+      try { if (cfgByClave['modulo_config']) APP_DATA.moduloConfig = JSON.parse(cfgByClave['modulo_config']); } catch(e){}
+      try { if (cfgByClave['temas_config'])  APP_DATA.temasConfig  = JSON.parse(cfgByClave['temas_config']);  } catch(e){}
+      try { APP_DATA.calEventos = cfgByClave['cal_eventos'] ? JSON.parse(cfgByClave['cal_eventos']) : []; } catch(e){ APP_DATA.calEventos = []; }
+
+      var chatv = (cfgByClave['chatia_modo_alumno'] || '').toString().trim();
+      APP_DATA._chatiaModoAlumno = (chatv === 'libre' || chatv === 'off') ? chatv : 'guia';
+
+      // Refrescar la cache compartida con los datos frescos
+      cacheShSet('configKV', cfg);
+      cacheShSet('raConfig', APP_DATA.raConfig);
+      cacheShSet('calEventos', APP_DATA.calEventos);
+      cacheShSet('temasBundle', { moduloConfig: APP_DATA.moduloConfig, temasConfig: APP_DATA.temasConfig, chatiaModoAlumno: APP_DATA._chatiaModoAlumno });
+
+      if (typeof aplicarTemasConfig  === 'function') aplicarTemasConfig();
+      if (typeof aplicarModuloConfig === 'function') aplicarModuloConfig();
+
+      hideLoading();
+      entrarComoAlumnoLocal(alumno, progResp);
+      return;
+    }
+    // ── (Si no hay bundle, sigue el flujo cache + Promise.all) ──
     // ── 1) Pre-cargar desde caché (instantáneo) ──────────────
     var cEj      = cacheShGet('ejerciciosProfesor');
     var cCfg     = cacheShGet('configKV');
