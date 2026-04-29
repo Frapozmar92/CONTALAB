@@ -6685,6 +6685,7 @@ async function guardarModuloConfig(nombre, subtitulo) {
   try {
     await sbUpsert('config', { clave:'modulo_config', valor:JSON.stringify(cfg) }, 'clave');
   } catch(e) { console.warn('[offline] guardarModuloConfig:', e.message); }
+  if (typeof cacheShSet === 'function') cacheShSet('temasBundle', { moduloConfig: APP_DATA.moduloConfig, temasConfig: APP_DATA.temasConfig, chatiaModoAlumno: APP_DATA._chatiaModoAlumno || 'guia' });
   aplicarModuloConfig();
   renderProfTemas();
 }
