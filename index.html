@@ -15658,6 +15658,29 @@ var LS_PREFIX = 'contaLab_';
 function lsGet(key)      { try { var v = localStorage.getItem(LS_PREFIX + key); return v ? JSON.parse(v) : null; } catch(e) { return null; } }
 function lsSet(key, val) { try { localStorage.setItem(LS_PREFIX + key, JSON.stringify(val)); } catch(e) { console.warn('[lsSet] localStorage no disponible'); } }
 
+// ── CACHE de datos COMPARTIDOS entre alumnos (TTL 5 min) ─────
+// Reduce drásticamente las consultas a Supabase cuando muchos alumnos entran a la vez,
+// y acelera los logins repetidos en el mismo navegador (datos disponibles al instante).
+var CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
+function cacheShGet(key) {
+  try {
+    var raw = lsGet('sh_' + key);
+    if (!raw || raw.t == null || !('v' in raw)) return null;
+    if (Date.now() - raw.t > CACHE_TTL_MS) return null;
+    return raw.v;
+  } catch(e) { return null; }
+}
+function cacheShSet(key, value) {
+  try { lsSet('sh_' + key, { t: Date.now(), v: value }); } catch(e) {}
+}
+function cacheShClear() {
+  try {
+    Object.keys(localStorage).forEach(function(k){
+      if (k.indexOf(LS_PREFIX + 'sh_') === 0) localStorage.removeItem(k);
+    });
+  } catch(e) {}
+}
+
 // ── Supabase REST helpers ────────────────────────────────────
 function sbHeaders() {
   // Usar el JWT de usuario autenticado si está disponible; si no, la anon key
@@ -16074,28 +16097,32 @@ async function confirmarNuevaPassword() {
 async function cargarYEntrarAlumno(alumno) {
   showLoading('Cargando tu progreso…');
   try {
-    // ✅ Todas las consultas en PARALELO (antes iban en serie)
-    var [progRows, ejercicios, respRows, cfg] = await Promise.all([
-      sbSelect('progreso', 'alumno_id=eq.' + alumno.id),
-      sbSelect('ejercicios_profesor', ''),
-      sbSelect('respuestas', 'alumno_id=eq.' + alumno.id),
-      sbSelect('config', '')
-    ]);
-
+    // Cargar progreso
+    var progRows = await sbSelect('progreso', 'alumno_id=eq.' + alumno.id);
     var progreso = progRows.length ? (progRows[0].datos || crearProgresoVacio()) : crearProgresoVacio();
 
+    // Cargar ejercicios del profesor
+    var ejercicios = await sbSelect('ejercicios_profesor', '');
     APP_DATA.ejerciciosProfesor = ejercicios
       .slice().sort(function(a,b){ var oa=(a.datos&&a.datos._orden!=null)?a.datos._orden:9999; var ob=(b.datos&&b.datos._orden!=null)?b.datos._orden:9999; return oa-ob; })
       .map(function(e){ return e.datos; });
 
+    // Cargar respuestas del alumno
+    var respRows = await sbSelect('respuestas', 'alumno_id=eq.' + alumno.id);
     APP_DATA.respuestasAlumno = respRows.map(function(r){
       return Object.assign({}, r.datos, { alumnoId: alumno.id, ejId: r.ejercicio_id, evaluacion: r.evaluacion, comentario: r.comentario, fecha: r.fecha, _dbId: r.id });
     });
 
+    // Cargar config
+    var cfg = await sbSelect('config', '');
     cfg.forEach(function(c){ if (c.clave === 'codigo_clase') APP_DATA.codigoClase = c.valor; });
 
-    // ✅ Estas tres también en paralelo
-    await Promise.all([cargarRaConfig(), cargarTemasConfig(), cargarCalEventos()]);
+    // Cargar configuración RA/CE
+    await cargarRaConfig();
+    // Cargar temas del módulo
+    await cargarTemasConfig();
+    // Cargar eventos del calendario
+    await cargarCalEventos();
 
     hideLoading();
     entrarComoAlumnoLocal(alumno, progreso);
@@ -16230,14 +16257,11 @@ async function loginProfesor() {
 
   try {
     // Cargar todos los datos del profesor
-    // ✅ Las 5 consultas en PARALELO (antes iban en serie)
-    var [ejercicios, allAlumnos, allRespRows, allProg, cfgAll] = await Promise.all([
-      sbSelect('ejercicios_profesor', ''),
-      sbSelect('alumnos', ''),
-      sbSelect('respuestas', ''),
-      sbSelect('progreso', ''),
-      sbSelect('config', '')
-    ]);
+    var ejercicios  = await sbSelect('ejercicios_profesor', '');
+    var allAlumnos  = await sbSelect('alumnos', '');
+    var allRespRows = await sbSelect('respuestas', '');
+    var allProg     = await sbSelect('progreso', '');
+    var cfgAll      = await sbSelect('config', '');
 
     cfgAll.forEach(function(c){ if (c.clave === 'codigo_clase') APP_DATA.codigoClase = c.valor; });
     APP_DATA.ejerciciosProfesor = ejercicios
