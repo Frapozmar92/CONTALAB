@@ -22991,24 +22991,32 @@ function _generarDias(n,m1,y){
 window.genAbrirModal = function(){
   var m=document.getElementById('gen-ej-modal');
   if(m){ m.style.display='flex'; }
+  var sectorEl=document.getElementById('gen-sector');
+  var sector=sectorEl?sectorEl.value:'comercio';
+  genRenderOps(sector);
   genNivelCambiar('medio');
 };
 window.genCerrarModal = function(){
   var m=document.getElementById('gen-ej-modal');
   if(m) m.style.display='none';
 };
+// Marca/desmarca todas las casillas que existan en el contenedor actual
 window.genSeleccionarTodas = function(v){
-  ['compraCred','compraCtado','ventaCred','ventaCtado','devCompra','devVenta','gastoAlquiler','gastoSuministros','nomina','inmovilizado','amortizacion','prestamo','varExistencias','cobroCliente','pagoProveedor'].forEach(function(id){
-    var el=document.getElementById('gen-op-'+id); if(el) el.checked=v;
-  });
+  var cont=document.getElementById('gen-ops-container');
+  if(!cont) return;
+  cont.querySelectorAll('input[type="checkbox"]').forEach(function(el){ el.checked=v; });
 };
+// Marca casillas según nivel: básico/medio/avanzado (acumulativo: medio incluye básico, avanzado todo)
 window.genNivelCambiar = function(nivel){
-  genSeleccionarTodas(false);
-  var basicas=['compraCred','ventaCred','cobroCliente','pagoProveedor'];
-  var medias=['compraCtado','ventaCtado','gastoAlquiler','gastoSuministros','nomina'];
-  var avanzadas=['devCompra','devVenta','inmovilizado','amortizacion','prestamo','varExistencias'];
-  var sel= nivel==='basico'?basicas : nivel==='medio'?basicas.concat(medias) : basicas.concat(medias).concat(avanzadas);
-  sel.forEach(function(id){ var el=document.getElementById('gen-op-'+id); if(el) el.checked=true; });
+  var cont=document.getElementById('gen-ops-container');
+  if(!cont) return;
+  cont.querySelectorAll('input[type="checkbox"]').forEach(function(el){
+    var n=el.getAttribute('data-nivel')||'medio';
+    var on = nivel==='avanzado' ? true
+           : nivel==='medio'    ? (n==='basico'||n==='medio')
+           :                      (n==='basico');
+    el.checked=on;
+  });
 };
 
 window.genEjercicio = function(){
