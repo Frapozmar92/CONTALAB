@@ -23090,13 +23090,38 @@ window.genEjercicio = function(){
   var nombreInput = (document.getElementById('gen-empresa-nombre')||{}).value||'';
   var sector      = (document.getElementById('gen-sector')||{value:'comercio'}).value;
   var formaJur    = (document.getElementById('gen-forma-jur')||{value:'SL'}).value;
-  var mesIdx      = parseInt((document.getElementById('gen-mes')||{value:'0'}).value)||0;
-  var anyo        = parseInt((document.getElementById('gen-anyo')||{value:'2025'}).value)||2025;
   var ivaStr      = (document.getElementById('gen-iva')||{value:'21'}).value;
-  var nOps        = Math.max(3,Math.min(15,parseInt((document.getElementById('gen-nops')||{value:'6'}).value)||6));
+  var nOps        = Math.max(3,Math.min(20,parseInt((document.getElementById('gen-nops')||{value:'6'}).value)||6));
   var iva         = parseFloat(ivaStr)/100;
-  var month1      = mesIdx+1;
-  var mesNombre   = _GEN.meses[mesIdx];
+  var incluirApertura = !!(document.getElementById('gen-apertura')||{}).checked;
+
+  // Modo de periodo: 'mes' o 'rango'
+  var modoEl = document.querySelector('input[name="gen-pmodo"]:checked');
+  var modoPeriodo = modoEl ? modoEl.value : 'mes';
+
+  // Variables que dependen del modo
+  var anyo, month1, mesNombre, fechaIniISO, fechaFinISO, fechasOps, periodoTextoIntro;
+  if(modoPeriodo === 'rango'){
+    fechaIniISO = (document.getElementById('gen-fecha-ini')||{value:'2026-01-01'}).value;
+    fechaFinISO = (document.getElementById('gen-fecha-fin')||{value:'2026-12-31'}).value;
+    var dIni = new Date(fechaIniISO+'T00:00:00');
+    var dFin = new Date(fechaFinISO+'T00:00:00');
+    if(isNaN(dIni)||isNaN(dFin)||dFin<=dIni){ alert('El rango de fechas no es válido.'); return; }
+    anyo = dIni.getFullYear();
+    month1 = dIni.getMonth()+1;
+    mesNombre = _GEN.meses[dIni.getMonth()];
+    fechasOps = _generarFechasRango(nOps, dIni, dFin);
+    periodoTextoIntro = 'durante el periodo comprendido entre el '+_fechaEs(dIni)+' y el '+_fechaEs(dFin);
+  } else {
+    var mesIdx = parseInt((document.getElementById('gen-mes')||{value:'0'}).value)||0;
+    anyo = parseInt((document.getElementById('gen-anyo')||{value:'2025'}).value)||2025;
+    month1 = mesIdx+1;
+    mesNombre = _GEN.meses[mesIdx];
+    fechasOps = _generarFechasMes(nOps, month1, anyo);
+    fechaIniISO = _fechaISO(anyo,month1,1);
+    fechaFinISO = _fechaISO(anyo,month1,_diasMes(month1,anyo));
+    periodoTextoIntro = 'durante el mes de '+mesNombre+' de '+anyo;
+  }
 
   var sec = _GEN.sectores[sector]||_GEN.sectores.comercio;
   var empNombre = nombreInput.trim() || _pick(_GEN.nombres);
