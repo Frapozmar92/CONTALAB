@@ -22851,6 +22851,128 @@ var _GEN = {
   }
 };
 
+// Catálogo de operaciones por sector. Cada operación: cat (categoría), id, label, hint (asiento esquemático), nivel (basico/medio/avanzado).
+var _GEN_OPS = {
+  comercio: [
+    { cat:'COMPRAS',     id:'compraCred',        label:'Compra de mercaderías a crédito',     hint:'600/472 → 400',          nivel:'basico' },
+    { cat:'COMPRAS',     id:'compraCtado',       label:'Compra de mercaderías al contado',    hint:'600/472 → 572',          nivel:'medio'  },
+    { cat:'VENTAS',      id:'ventaCred',         label:'Venta de mercaderías a crédito',      hint:'430 → 700/477',          nivel:'basico' },
+    { cat:'VENTAS',      id:'ventaCtado',        label:'Venta de mercaderías al contado',     hint:'572 → 700/477',          nivel:'medio'  },
+    { cat:'DEVOLUCIONES',id:'devCompra',         label:'Devolución de compra',                hint:'400 → 608/472',          nivel:'avanzado' },
+    { cat:'DEVOLUCIONES',id:'devVenta',          label:'Devolución de venta',                 hint:'708/477 → 430',          nivel:'avanzado' },
+    { cat:'GASTOS',      id:'gastoAlquiler',     label:'Gasto de alquiler del local',         hint:'621/472 → 572',          nivel:'medio'  },
+    { cat:'GASTOS',      id:'gastoSuministros',  label:'Gastos de suministros',               hint:'628/472 → 572',          nivel:'medio'  },
+    { cat:'PERSONAL',    id:'nomina',            label:'Nómina mensual',                      hint:'640/642 → 465/4751/476', nivel:'medio'  },
+    { cat:'INMOVILIZADO',id:'inmovilizado',      label:'Compra de inmovilizado material',     hint:'213/216/217 → 170',      nivel:'avanzado' },
+    { cat:'INMOVILIZADO',id:'amortizacion',      label:'Dotación de amortización',            hint:'681 → 281',              nivel:'avanzado' },
+    { cat:'FINANCIERO',  id:'prestamo',          label:'Préstamo bancario recibido',          hint:'572 → 170',              nivel:'avanzado' },
+    { cat:'CIERRE',      id:'varExistencias',    label:'Variación de existencias',            hint:'300 ↔ 610',              nivel:'avanzado' },
+    { cat:'TESORERÍA',   id:'cobroCliente',      label:'Cobro de cliente',                    hint:'572 → 430',              nivel:'basico' },
+    { cat:'TESORERÍA',   id:'pagoProveedor',     label:'Pago a proveedor',                    hint:'400 → 572',              nivel:'basico' }
+  ],
+  servicios: [
+    { cat:'INGRESOS',    id:'prestServCred',     label:'Prestación de servicios a crédito',   hint:'430 → 705/477',          nivel:'basico' },
+    { cat:'INGRESOS',    id:'prestServCtado',    label:'Prestación de servicios al contado',  hint:'572 → 705/477',          nivel:'basico' },
+    { cat:'COMPRAS',     id:'compraMatOficina',  label:'Compra de material de oficina',       hint:'629/472 → 572',          nivel:'medio'  },
+    { cat:'GASTOS',      id:'gastoAlquiler',     label:'Gasto de alquiler de oficina',        hint:'621/472 → 572',          nivel:'medio'  },
+    { cat:'GASTOS',      id:'gastoSuministros',  label:'Gastos de suministros',               hint:'628/472 → 572',          nivel:'medio'  },
+    { cat:'PERSONAL',    id:'nomina',            label:'Nómina mensual',                      hint:'640/642 → 465/4751/476', nivel:'medio'  },
+    { cat:'INMOVILIZADO',id:'inmovilizadoEquipos',label:'Compra de equipos / mobiliario',     hint:'216/217 → 170',          nivel:'avanzado' },
+    { cat:'INMOVILIZADO',id:'amortizacion',      label:'Dotación de amortización',            hint:'681 → 281',              nivel:'avanzado' },
+    { cat:'FINANCIERO',  id:'prestamo',          label:'Préstamo bancario recibido',          hint:'572 → 170',              nivel:'avanzado' },
+    { cat:'TESORERÍA',   id:'cobroCliente',      label:'Cobro de cliente',                    hint:'572 → 430',              nivel:'basico' },
+    { cat:'TESORERÍA',   id:'pagoAcreedor',      label:'Pago a acreedor por servicios',       hint:'410 → 572',              nivel:'basico' }
+  ],
+  hosteleria: [
+    { cat:'COMPRAS',     id:'compraGenerosCred', label:'Compra de géneros a crédito',         hint:'600/472 → 400',          nivel:'basico' },
+    { cat:'COMPRAS',     id:'compraGenerosCtado',label:'Compra de géneros al contado',        hint:'600/472 → 572',          nivel:'basico' },
+    { cat:'INGRESOS',    id:'ventaTPV',          label:'Recaudación diaria por TPV',          hint:'572 → 700/477',          nivel:'basico' },
+    { cat:'GASTOS',      id:'gastoAlquiler',     label:'Gasto de alquiler del local',         hint:'621/472 → 572',          nivel:'medio'  },
+    { cat:'GASTOS',      id:'gastoSuministros',  label:'Suministros (gas, luz, agua)',        hint:'628/472 → 572',          nivel:'medio'  },
+    { cat:'PERSONAL',    id:'nomina',            label:'Nómina mensual',                      hint:'640/642 → 465/4751/476', nivel:'medio'  },
+    { cat:'INMOVILIZADO',id:'inmovilizadoCocina',label:'Compra de equipos cocina/mobiliario', hint:'213/216 → 170',          nivel:'avanzado' },
+    { cat:'INMOVILIZADO',id:'amortizacion',      label:'Dotación de amortización',            hint:'681 → 281',              nivel:'avanzado' },
+    { cat:'FINANCIERO',  id:'prestamo',          label:'Préstamo bancario recibido',          hint:'572 → 170',              nivel:'avanzado' },
+    { cat:'CIERRE',      id:'varExistencias',    label:'Variación de existencias (géneros)',  hint:'300 ↔ 610',              nivel:'avanzado' },
+    { cat:'TESORERÍA',   id:'pagoProveedor',     label:'Pago a proveedor',                    hint:'400 → 572',              nivel:'basico' }
+  ],
+  construccion: [
+    { cat:'COMPRAS',     id:'compraMaterialCred', label:'Compra de materiales a crédito',     hint:'601/472 → 400',          nivel:'basico' },
+    { cat:'COMPRAS',     id:'compraMaterialCtado',label:'Compra de materiales al contado',    hint:'601/472 → 572',          nivel:'medio'  },
+    { cat:'INGRESOS',    id:'certificacionObra', label:'Certificación de obra (factura)',     hint:'430 → 705/477',          nivel:'basico' },
+    { cat:'GASTOS',      id:'subcontrata',       label:'Gasto por subcontratación',           hint:'607/472 → 400',          nivel:'avanzado' },
+    { cat:'GASTOS',      id:'gastoAlquilerMaq',  label:'Alquiler de maquinaria/local',        hint:'621/472 → 572',          nivel:'medio'  },
+    { cat:'GASTOS',      id:'gastoSuministros',  label:'Gastos de suministros en obra',       hint:'628/472 → 572',          nivel:'medio'  },
+    { cat:'PERSONAL',    id:'nomina',            label:'Nómina mensual',                      hint:'640/642 → 465/4751/476', nivel:'medio'  },
+    { cat:'INMOVILIZADO',id:'inmovilizadoConstr',label:'Compra de maquinaria/vehículo',       hint:'213/218 → 170',          nivel:'avanzado' },
+    { cat:'INMOVILIZADO',id:'amortizacion',      label:'Dotación de amortización',            hint:'681 → 281',              nivel:'avanzado' },
+    { cat:'FINANCIERO',  id:'prestamo',          label:'Préstamo bancario recibido',          hint:'572 → 170',              nivel:'avanzado' },
+    { cat:'TESORERÍA',   id:'cobroCliente',      label:'Cobro de certificación',              hint:'572 → 430',              nivel:'basico' },
+    { cat:'TESORERÍA',   id:'pagoProveedor',     label:'Pago a proveedor',                    hint:'400 → 572',              nivel:'basico' }
+  ],
+  informatica: [
+    { cat:'INGRESOS',    id:'prestServCred',     label:'Desarrollo/proyecto a crédito',       hint:'430 → 705/477',          nivel:'basico' },
+    { cat:'INGRESOS',    id:'prestServCtado',    label:'Servicio puntual al contado',         hint:'572 → 705/477',          nivel:'basico' },
+    { cat:'COMPRAS',     id:'compraLicencias',   label:'Compra de licencias software',        hint:'206/472 → 572',          nivel:'avanzado' },
+    { cat:'GASTOS',      id:'gastoAlquiler',     label:'Alquiler de oficina/coworking',       hint:'621/472 → 572',          nivel:'medio'  },
+    { cat:'GASTOS',      id:'gastoHosting',      label:'Gastos de hosting/cloud/internet',    hint:'628/472 → 572',          nivel:'medio'  },
+    { cat:'PERSONAL',    id:'nomina',            label:'Nómina mensual',                      hint:'640/642 → 465/4751/476', nivel:'medio'  },
+    { cat:'INMOVILIZADO',id:'inmovilizadoEquiposIT',label:'Compra de equipos informáticos',   hint:'217 → 170',              nivel:'avanzado' },
+    { cat:'INMOVILIZADO',id:'amortizacion',      label:'Dotación de amortización',            hint:'681 → 281',              nivel:'avanzado' },
+    { cat:'FINANCIERO',  id:'prestamo',          label:'Préstamo bancario recibido',          hint:'572 → 170',              nivel:'avanzado' },
+    { cat:'TESORERÍA',   id:'cobroCliente',      label:'Cobro de cliente',                    hint:'572 → 430',              nivel:'basico' },
+    { cat:'TESORERÍA',   id:'pagoAcreedor',      label:'Pago a acreedor',                     hint:'410 → 572',              nivel:'basico' }
+  ],
+  transporte: [
+    { cat:'INGRESOS',    id:'prestTranspCred',   label:'Servicio de transporte a crédito',    hint:'430 → 705/477',          nivel:'basico' },
+    { cat:'INGRESOS',    id:'prestTranspCtado',  label:'Cobro de servicio al contado',        hint:'572 → 705/477',          nivel:'basico' },
+    { cat:'GASTOS',      id:'compraCombustible', label:'Compra de combustible',               hint:'628/472 → 572',          nivel:'basico' },
+    { cat:'GASTOS',      id:'gastoMantVehic',    label:'Mantenimiento/reparación vehículos',  hint:'622/472 → 572',          nivel:'medio'  },
+    { cat:'GASTOS',      id:'gastoAlquilerNave', label:'Alquiler de nave/local',              hint:'621/472 → 572',          nivel:'medio'  },
+    { cat:'PERSONAL',    id:'nomina',            label:'Nómina mensual',                      hint:'640/642 → 465/4751/476', nivel:'medio'  },
+    { cat:'INMOVILIZADO',id:'inmovilizadoVehic', label:'Compra de vehículo de transporte',    hint:'218 → 170',              nivel:'avanzado' },
+    { cat:'INMOVILIZADO',id:'amortizacion',      label:'Dotación de amortización',            hint:'681 → 281',              nivel:'avanzado' },
+    { cat:'FINANCIERO',  id:'prestamo',          label:'Préstamo bancario recibido',          hint:'572 → 170',              nivel:'avanzado' },
+    { cat:'TESORERÍA',   id:'cobroCliente',      label:'Cobro de cliente',                    hint:'572 → 430',              nivel:'basico' },
+    { cat:'TESORERÍA',   id:'pagoProveedor',     label:'Pago a proveedor',                    hint:'400 → 572',              nivel:'basico' }
+  ]
+};
+
+window.genRenderOps = function(sector){
+  var cont = document.getElementById('gen-ops-container');
+  if(!cont) return;
+  var ops = _GEN_OPS[sector] || _GEN_OPS.comercio;
+  // Agrupar por categoría preservando el orden
+  var orderCats = [];
+  var byCat = {};
+  ops.forEach(function(o){
+    if(!byCat[o.cat]){ byCat[o.cat] = []; orderCats.push(o.cat); }
+    byCat[o.cat].push(o);
+  });
+  // Repartir las categorías en 2 columnas equilibradas por nº de operaciones
+  var col1=[], col2=[], n1=0, n2=0;
+  orderCats.forEach(function(c){
+    if(n1 <= n2){ col1.push(c); n1 += byCat[c].length; }
+    else        { col2.push(c); n2 += byCat[c].length; }
+  });
+  function renderCol(cats){
+    return cats.map(function(c){
+      var items = byCat[c].map(function(o){
+        return '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;" title="'+o.hint+'">'+
+          '<input type="checkbox" id="gen-op-'+o.id+'" data-nivel="'+o.nivel+'" style="accent-color:var(--accent4);width:14px;height:14px;flex-shrink:0;">'+
+          '<span style="font-size:0.8rem;line-height:1.3;">'+o.label+'</span>'+
+        '</label>';
+      }).join('');
+      return '<div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin:6px 0 4px;letter-spacing:1px;">'+c+'</div>'+items;
+    }).join('');
+  }
+  cont.innerHTML =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;">'+
+      '<div>'+renderCol(col1)+'</div>'+
+      '<div>'+renderCol(col2)+'</div>'+
+    '</div>';
+};
+
 function _rnd(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
 function _pick(arr){ return arr[_rnd(0,arr.length-1)]; }
 function _pickExcept(arr,exc){ var f=arr.filter(function(x){return x!==exc;}); return f.length?_pick(f):_pick(arr); }
