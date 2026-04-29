@@ -23550,10 +23550,17 @@ window.genEjercicio = function(){
   var introEl=document.getElementById('pf-enunciado');
   if(introEl) introEl.value=intro;
 
+  // Si se ha pedido asiento de apertura, añadirlo como primer subenunciado
+  if(incluirApertura){
+    var apertura = _generarAsientoApertura(fechaIniISO, sector);
+    addProfSubenunciado(apertura);
+  }
+
   // Add subenunciados
   operaciones.forEach(function(op){ addProfSubenunciado(op); });
 
-  if(typeof flash==='function') flash('✅ Ejercicio generado con '+operaciones.length+' operaciones', 'var(--green)');
+  var totalSubs = (incluirApertura?1:0) + operaciones.length;
+  if(typeof flash==='function') flash('✅ Ejercicio generado con '+totalSubs+' apartados'+(incluirApertura?' (incluye apertura)':''), 'var(--green)');
 };
 
 })();
