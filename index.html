@@ -15992,6 +15992,64 @@ async function registrarAlumno() {
   }
 }
 
+// ── HELPER: fetch con timeout + reintentos automáticos ──────────────
+// Resuelve el problema de "spinner infinito" cuando la Edge Function
+// tarda mucho (cold start) o falla transitoriamente (rate limit, red).
+// - timeoutMs: corta la espera con AbortController
+// - maxIntentos: reintenta en errores de red o 5xx (con backoff + jitter)
+// - 4xx (401, 404, etc.) NO se reintentan: son errores legítimos de usuario
+async function fetchConTimeoutYReintentos(url, options, timeoutMs, maxIntentos, onProgreso) {
+  timeoutMs   = timeoutMs   || 20000;
+  maxIntentos = maxIntentos || 3;
+  var ultimoError = null;
+  for (var intento = 1; intento <= maxIntentos; intento++) {
+    var ctrl = new AbortController();
+    var t = setTimeout(function(){ ctrl.abort(); }, timeoutMs);
+    try {
+      var opts = Object.assign({}, options, { signal: ctrl.signal });
+      var res = await fetch(url, opts);
+      clearTimeout(t);
+      // 5xx → reintentar; 4xx → devolver al caller (es un error de validación)
+      if (res.status >= 500 && intento < maxIntentos) {
+        ultimoError = new Error('Servidor ocupado (' + res.status + ')');
+        var espera1 = 500 * intento + Math.floor(Math.random() * 800);
+        if (onProgreso) onProgreso('Servidor ocupado. Reintentando… (' + (intento+1) + '/' + maxIntentos + ')');
+        await new Promise(function(r){ setTimeout(r, espera1); });
+        continue;
+      }
+      return res;
+    } catch(e) {
+      clearTimeout(t);
+      ultimoError = e;
+      if (intento < maxIntentos) {
+        // Backoff exponencial con jitter: 600ms, 1500ms, 3000ms…
+        var espera2 = 300 * Math.pow(2, intento) + Math.floor(Math.random() * 1000);
+        if (onProgreso) onProgreso('Conexión lenta. Reintentando… (' + (intento+1) + '/' + maxIntentos + ')');
+        await new Promise(function(r){ setTimeout(r, espera2); });
+        continue;
+      }
+    }
+  }
+  throw ultimoError || new Error('No se pudo conectar tras varios intentos.');
+}
+
+// ── PRE-WARM Edge Function ───────────────────────────────────
+// Cuando un alumno abre la página de login, hacemos un ping ligero
+// a la Edge Function para "despertarla" (evita el cold start de 2-5s
+// cuando 30 alumnos pulsan login a la vez).
+var _loginPrewarmHecho = false;
+function prewarmLoginFunction() {
+  if (_loginPrewarmHecho) return;
+  _loginPrewarmHecho = true;
+  try {
+    fetch(SUPABASE_URL + '/functions/v1/login-alumno', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+      body: JSON.stringify({ prewarm: true })
+    }).catch(function(){ /* silencioso, es solo pre-warm */ });
+  } catch(e) { /* silencioso */ }
+}
+
 // ── LOGIN ALUMNO ─────────────────────────────────────────────
 // Autenticación 100% vía Edge Function: el cliente NO lee `alumnos` con anon
 // ni compara hashes en JS. Toda verificación ocurre en el servidor.
@@ -16002,16 +16060,25 @@ async function loginAlumno() {
   if (!nombre) { showLoginError('l-error-alumno', 'Introduce tu nombre.'); return; }
   if (!pwd)    { showLoginError('l-error-alumno', 'Introduce tu contraseña.'); return; }
 
+  // Guardar credenciales para botón "Reintentar"
+  window._ultimoLoginAlumno = { nombre: nombre, pwd: pwd };
+
   showLoading('Iniciando sesión…');
   try {
     // Solicitar bundle SIEMPRE: el servidor devuelve, en una sola respuesta,
     // el token + alumno + progreso + respuestas + ejercicios + config.
     // Esto reduce drásticamente los round-trips cuando muchos alumnos entran a la vez.
-    var fnRes = await fetch(SUPABASE_URL + '/functions/v1/login-alumno', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
-      body: JSON.stringify({ nombre: nombre, password: pwd, with_bundle: true })
-    });
+    var fnRes = await fetchConTimeoutYReintentos(
+      SUPABASE_URL + '/functions/v1/login-alumno',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+        body: JSON.stringify({ nombre: nombre, password: pwd, with_bundle: true })
+      },
+      20000,  // timeout 20s
+      3,      // 3 intentos
+      function(msg){ showLoading(msg); }  // feedback en el spinner
+    );
     var fnData = await fnRes.json();
 
     if (fnRes.status === 404) {
