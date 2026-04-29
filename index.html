@@ -23082,6 +23082,53 @@ function _fechaEs(d){
   return d.getDate() + ' de ' + _GEN.meses[d.getMonth()] + ' de ' + d.getFullYear();
 }
 
+// Genera un asiento de apertura realista y BALANCEADO (debe = haber) para un sector dado.
+// Devuelve un objeto compatible con addProfSubenunciado: {texto, pista, fecha, filas}.
+function _generarAsientoApertura(fechaISO, sector){
+  // Construimos saldos típicos según sector y forzamos cuadre asignando el resto a Reservas (113).
+  var hayMercaderias = (sector==='comercio' || sector==='hosteleria');
+  var ctaInmoPral = sector==='transporte' ? '218' : (sector==='construccion' ? '213' : (sector==='informatica' ? '217' : '213'));
+  var nomInmoPral = sector==='transporte' ? 'Elementos de transporte' : (sector==='construccion' ? 'Maquinaria' : (sector==='informatica' ? 'Equipos para procesos de información' : 'Maquinaria'));
+
+  var debe = [];
+  var haber = [];
+
+  // ACTIVO (debe)
+  debe.push({tipo:'debe', cuenta:ctaInmoPral, nombre:nomInmoPral,                      debe:_imp(20000,60000)});
+  debe.push({tipo:'debe', cuenta:'216',       nombre:'Mobiliario',                     debe:_imp(3000,8000)});
+  debe.push({tipo:'debe', cuenta:'217',       nombre:'Equipos para procesos de información', debe:_imp(2000,5000)});
+  if(hayMercaderias){
+    debe.push({tipo:'debe', cuenta:'300',     nombre:'Mercaderías',                    debe:_imp(4000,15000)});
+  }
+  debe.push({tipo:'debe', cuenta:'430',       nombre:'Clientes',                       debe:_imp(5000,18000)});
+  debe.push({tipo:'debe', cuenta:'572',       nombre:'Bancos, c/c a la vista',         debe:_imp(8000,25000)});
+  debe.push({tipo:'debe', cuenta:'570',       nombre:'Caja, euros',                    debe:_imp(200,1500)});
+
+  // PASIVO + PN (haber)
+  haber.push({tipo:'haber', cuenta:'100',     nombre:'Capital social',                 haber:_imp(15000,40000)});
+  haber.push({tipo:'haber', cuenta:'170',     nombre:'Deudas a l/p con entidades de crédito', haber:_imp(15000,40000)});
+  haber.push({tipo:'haber', cuenta:'400',     nombre:'Proveedores',                    haber:_imp(3000,10000)});
+  haber.push({tipo:'haber', cuenta:'281',     nombre:'Amortización acumulada del inm. material', haber:_imp(2000,8000)});
+
+  var sumDebe  = debe.reduce(function(a,f){ return a+f.debe;  }, 0);
+  var sumHaber = haber.reduce(function(a,f){ return a+f.haber; }, 0);
+  // Cuadrar con Reservas (113): si sumDebe>sumHaber añadimos al haber, si no, restamos al haber (ajustando capital).
+  var diff = _fmt2(sumDebe - sumHaber);
+  if(diff > 0){
+    haber.push({tipo:'haber', cuenta:'113', nombre:'Reservas voluntarias', haber:diff});
+  } else if(diff < 0){
+    // Caso poco habitual: incrementamos un activo (caja) para cuadrar
+    debe.push({tipo:'debe', cuenta:'570', nombre:'Caja, euros (ajuste)', debe:Math.abs(diff)});
+  }
+
+  return {
+    texto: 'Asiento de apertura del ejercicio. Se registran los saldos iniciales heredados del ejercicio anterior según el balance de cierre.',
+    pista: 'En el asiento de apertura se cargan las cuentas de activo y se abonan las de pasivo y patrimonio neto. Debe = Haber.',
+    fecha: fechaISO,
+    filas: debe.concat(haber)
+  };
+}
+
 window.genAbrirModal = function(){
   var m=document.getElementById('gen-ej-modal');
   if(m){ m.style.display='flex'; }
