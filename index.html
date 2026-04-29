@@ -23429,6 +23429,104 @@ window.genEjercicio = function(){
       txt=ft+' — La empresa adquiere un vehículo industrial para el transporte por '+_es(b)+' € + IVA '+ivaLabel+'. Se financia mediante préstamo bancario a largo plazo.';
       pista='Los elementos de transporte se registran en la cuenta 218.';
       filas=[{tipo:'debe',cuenta:'218',nombre:'Elementos de transporte',debe:b},{tipo:'debe',cuenta:'472',nombre:'H.P. IVA soportado',debe:iv},{tipo:'haber',cuenta:'170',nombre:'Deudas a l/p con entidades de crédito',haber:tt}];
+
+    // ── VENTA DE INMOVILIZADO (con beneficio o pérdida aleatoria) ──
+    } else if(op==='ventaInmovilizado'){
+      var coste = _imp(8000,25000);
+      var amortAcum = _fmt2(coste*(_rnd(40,70)/100));
+      var vNeto = _fmt2(coste - amortAcum);
+      var conBenef = Math.random() < 0.5;
+      var precioVenta = conBenef ? _fmt2(vNeto*(1+_rnd(15,40)/100)) : _fmt2(vNeto*(_rnd(50,85)/100));
+      precioVenta = Math.round(precioVenta/50)*50;
+      var ivaV = _fmt2(precioVenta*iva);
+      var totV = _fmt2(precioVenta + ivaV);
+      var diff = _fmt2(precioVenta - vNeto);
+      var tipos=[['Mobiliario','216','281'],['Equipos para procesos de información','217','281'],['Maquinaria','213','281']];
+      var tp=_pick(tipos);
+      txt=ft+' — Se vende '+tp[0].toLowerCase()+' adquirido en su día por '+_es(coste)+' €, con una amortización acumulada de '+_es(amortAcum)+' €. El precio de venta es '+_es(precioVenta)+' € + IVA '+ivaLabel+' (cobro por banco).';
+      pista='Al vender un inmovilizado se da de baja el coste (H 21X) y la amortización acumulada (D 281). La diferencia con el precio neto es beneficio (771) o pérdida (671).';
+      filas=[
+        {tipo:'debe',cuenta:'572',nombre:'Bancos',debe:totV},
+        {tipo:'debe',cuenta:'281',nombre:'Amortización acumulada del inm. material',debe:amortAcum}
+      ];
+      if(!conBenef){
+        filas.push({tipo:'debe',cuenta:'671',nombre:'Pérdidas procedentes del inmovilizado material',debe:Math.abs(diff)});
+      }
+      filas.push({tipo:'haber',cuenta:tp[1],nombre:tp[0],haber:coste});
+      filas.push({tipo:'haber',cuenta:'477',nombre:'H.P. IVA repercutido',haber:ivaV});
+      if(conBenef){
+        filas.push({tipo:'haber',cuenta:'771',nombre:'Beneficios procedentes del inmovilizado material',haber:diff});
+      }
+
+    // ── MONEDA EXTRANJERA ──
+    } else if(op==='monedaExtCompra'){
+      var dolares = _imp(3000,15000);
+      var cambioIni = _fmt2(0.85 + _rnd(-5,5)/100);
+      var cambioFin = _fmt2(cambioIni + (Math.random()<0.5?-1:1)*(_rnd(3,10)/100));
+      var saldoEur = _fmt2(dolares*cambioIni);
+      var pagoEur  = _fmt2(dolares*cambioFin);
+      var difCambio = _fmt2(saldoEur - pagoEur);
+      var favorable = difCambio > 0;
+      txt=ft+' — Se paga al proveedor extranjero "'+_pick(['ATLANTIC SUPPLIES INC.','EUROTRADE LTD.','GLOBAL PARTNERS GMBH'])+'" una factura de '+_es(dolares)+' $ registrada inicialmente al cambio 1 $ = '+cambioIni.toFixed(4)+' € (saldo en libros: '+_es(saldoEur)+' €). En la fecha del pago el cambio es 1 $ = '+cambioFin.toFixed(4)+' € ('+_es(pagoEur)+' €).';
+      pista=favorable?'Si pagas menos € de lo que tenías como deuda, surge una diferencia POSITIVA de cambio (768).':'Si pagas más € de lo que tenías como deuda, surge una diferencia NEGATIVA de cambio (668).';
+      filas=[{tipo:'debe',cuenta:'400',nombre:'Proveedores',debe:saldoEur}];
+      if(!favorable){ filas.push({tipo:'debe',cuenta:'668',nombre:'Diferencias negativas de cambio',debe:Math.abs(difCambio)}); }
+      filas.push({tipo:'haber',cuenta:'572',nombre:'Bancos',haber:pagoEur});
+      if(favorable){ filas.push({tipo:'haber',cuenta:'768',nombre:'Diferencias positivas de cambio',haber:Math.abs(difCambio)}); }
+    } else if(op==='monedaExtVenta'){
+      var dolares = _imp(4000,18000);
+      var cambioIni = _fmt2(0.85 + _rnd(-5,5)/100);
+      var cambioFin = _fmt2(cambioIni + (Math.random()<0.5?-1:1)*(_rnd(3,10)/100));
+      var saldoEur = _fmt2(dolares*cambioIni);
+      var cobroEur = _fmt2(dolares*cambioFin);
+      var difCambio = _fmt2(cobroEur - saldoEur);
+      var favorable = difCambio > 0;
+      txt=ft+' — Se cobra del cliente extranjero "'+_pick(['NORTH AMERICAN TRADERS','EU IMPORT-EXPORT LTD.','ASIA-PACIFIC CORP.'])+'" una factura de '+_es(dolares)+' $ registrada inicialmente al cambio 1 $ = '+cambioIni.toFixed(4)+' € (saldo en libros: '+_es(saldoEur)+' €). En la fecha del cobro el cambio es 1 $ = '+cambioFin.toFixed(4)+' € ('+_es(cobroEur)+' €).';
+      pista=favorable?'Si cobras más € de los que tenías como derecho de cobro, surge una diferencia POSITIVA de cambio (768).':'Si cobras menos € de los que tenías como derecho de cobro, surge una diferencia NEGATIVA de cambio (668).';
+      filas=[{tipo:'debe',cuenta:'572',nombre:'Bancos',debe:cobroEur}];
+      if(!favorable){ filas.push({tipo:'debe',cuenta:'668',nombre:'Diferencias negativas de cambio',debe:Math.abs(difCambio)}); }
+      filas.push({tipo:'haber',cuenta:'430',nombre:'Clientes',haber:saldoEur});
+      if(favorable){ filas.push({tipo:'haber',cuenta:'768',nombre:'Diferencias positivas de cambio',haber:Math.abs(difCambio)}); }
+
+    // ── PERIODIFICACIÓN DE GASTOS E INGRESOS ──
+    } else if(op==='periodGastoAnt'){
+      var conceptos=[['un seguro multirriesgo','625'],['el alquiler trimestral del local','621'],['una suscripción anual','629']];
+      var c=_pick(conceptos);
+      var totalPagado = _imp(1200,4800);
+      var mesesNoConsumidos = _rnd(3,9);
+      var mesesTotal = 12;
+      var partePeriod = _fmt2(totalPagado * mesesNoConsumidos / mesesTotal);
+      txt=ft+' — Al cierre del ejercicio, periodifica el gasto correspondiente a '+c[0]+' por importe de '+_es(totalPagado)+' € satisfecho durante el ejercicio. De los 12 meses cubiertos, '+mesesNoConsumidos+' corresponden al ejercicio siguiente. Importe a periodificar: '+_es(partePeriod)+' €.';
+      pista='Los gastos pagados que cubren parte del ejercicio siguiente se periodifican a la cuenta 480 (Gastos anticipados), reduciendo el gasto del periodo.';
+      filas=[
+        {tipo:'debe',cuenta:'480',nombre:'Gastos anticipados',debe:partePeriod},
+        {tipo:'haber',cuenta:c[1],nombre: c[1]==='625'?'Primas de seguros':(c[1]==='621'?'Arrendamientos y cánones':'Otros servicios'),haber:partePeriod}
+      ];
+    } else if(op==='periodIngresoAnt'){
+      var totalCobrado = _imp(2400,9600);
+      var mesesNoDevengados = _rnd(2,8);
+      var mesesTotal = 12;
+      var partePeriod = _fmt2(totalCobrado * mesesNoDevengados / mesesTotal);
+      var conceptos=[['un contrato anual de servicios','705'],['un alquiler cobrado por adelantado','752']];
+      var c=_pick(conceptos);
+      txt=ft+' — Al cierre del ejercicio, periodifica el ingreso por '+c[0]+' cobrado durante el ejercicio por importe de '+_es(totalCobrado)+' €. De los 12 meses cubiertos, '+mesesNoDevengados+' corresponden al ejercicio siguiente. Importe a periodificar: '+_es(partePeriod)+' €.';
+      pista='Los ingresos cobrados que corresponden al ejercicio siguiente se periodifican a la cuenta 485 (Ingresos anticipados), reduciendo el ingreso del periodo.';
+      filas=[
+        {tipo:'debe',cuenta:c[1],nombre: c[1]==='705'?'Prestaciones de servicios':'Ingresos por arrendamientos',debe:partePeriod},
+        {tipo:'haber',cuenta:'485',nombre:'Ingresos anticipados',haber:partePeriod}
+      ];
+
+    // ── DETERIORO DE CRÉDITOS COMERCIALES (MÉTODO GLOBAL) ──
+    } else if(op==='deterioroGlobal'){
+      var saldoClientes = _imp(20000,80000);
+      var pct = _pick([2,3,4,5]);
+      var dotacion = _fmt2(saldoClientes * pct / 100);
+      txt=ft+' — Al cierre del ejercicio, se aplica el método GLOBAL de estimación de insolvencias sobre el saldo de clientes. Saldo total de la cuenta 430 al cierre: '+_es(saldoClientes)+' €. Porcentaje estimado de morosidad: '+pct+' %. Calcula y registra la dotación correspondiente.';
+      pista='Método global: se dota un porcentaje sobre el saldo TOTAL de clientes. Cargo en 694 (gasto) contra abono en 490 (correctora del activo).';
+      filas=[
+        {tipo:'debe',cuenta:'694',nombre:'Pérdidas por deterioro de créditos comerciales',debe:dotacion},
+        {tipo:'haber',cuenta:'490',nombre:'Deterioro de valor de créditos por op. comerciales',haber:dotacion}
+      ];
     }
     return txt ? {texto:txt, filas:filas, pista:pista, fecha:fi} : null;
   }).filter(Boolean);
