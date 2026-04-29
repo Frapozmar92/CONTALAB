@@ -23193,7 +23193,8 @@ window.genEjercicio = function(){
   function tot(b){ return _fmt2(b+ivaOf(b)); }
 
   var operaciones = pool.map(function(op,idx){
-    var d=dias[idx], fi=_fechaISO(anyo,month1,d), ft=_fechaTxt(anyo,month1,d);
+    var f=fechasOps[idx]||fechasOps[fechasOps.length-1];
+    var fi=f.iso, ft=f.txt;
     var txt='', filas=[], pista='';
 
     if(op==='compraCred'){
