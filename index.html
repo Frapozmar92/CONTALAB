@@ -20412,6 +20412,7 @@ async function guardarRaConfig() {
   } catch(e) {
     flash('⚠ Error al guardar (se mantiene en memoria)', 'var(--accent)');
   }
+  if (typeof cacheShSet === 'function') cacheShSet('raConfig', APP_DATA.raConfig);
   actualizarNotaModulo();
   renderProfRAEval();
 }
