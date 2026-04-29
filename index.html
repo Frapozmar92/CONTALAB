@@ -23054,6 +23054,33 @@ function _generarDias(n,m1,y){
   for(var i=0;i<n;i++){ dias.push(Math.min((i+1)*step+_rnd(0,Math.max(0,step-1)),max)); }
   return dias;
 }
+// Genera n fechas {iso, txt} dentro de un mes específico
+function _generarFechasMes(n, m1, y){
+  return _generarDias(n,m1,y).map(function(d){
+    return { iso:_fechaISO(y,m1,d), txt:_fechaTxt(y,m1,d) };
+  });
+}
+// Genera n fechas {iso, txt} repartidas entre dIni y dFin (Date objects)
+function _generarFechasRango(n, dIni, dFin){
+  var diff = dFin.getTime() - dIni.getTime();
+  var fechas = [];
+  for(var i=0;i<n;i++){
+    var t = (i+1) / (n+1);
+    var jitter = (Math.random() - 0.5) * (1/(n+2));
+    var clamped = Math.max(0, Math.min(1, t + jitter));
+    var d = new Date(dIni.getTime() + diff * clamped);
+    fechas.push(d);
+  }
+  fechas.sort(function(a,b){ return a-b; });
+  return fechas.map(function(d){
+    var y=d.getFullYear(), m1=d.getMonth()+1, dd=d.getDate();
+    return { iso:_fechaISO(y,m1,dd), txt:_fechaTxt(y,m1,dd) };
+  });
+}
+// Formato fecha en español: "15 de marzo de 2026"
+function _fechaEs(d){
+  return d.getDate() + ' de ' + _GEN.meses[d.getMonth()] + ' de ' + d.getFullYear();
+}
 
 window.genAbrirModal = function(){
   var m=document.getElementById('gen-ej-modal');
