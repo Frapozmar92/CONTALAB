@@ -23161,6 +23161,134 @@ window.genEjercicio = function(){
       txt=ft+' — Se ordena transferencia bancaria por '+_es(m)+' € a '+prov1+' para cancelar facturas vencidas.';
       pista='El pago a proveedores cancela la deuda (400) y reduce la tesorería (572).';
       filas=[{tipo:'debe',cuenta:'400',nombre:'Proveedores',debe:m},{tipo:'haber',cuenta:'572',nombre:'Bancos',haber:m}];
+
+    // ── SERVICIOS / INFORMÁTICA / TRANSPORTE: prestaciones de servicios ──
+    } else if(op==='prestServCred' || op==='prestTranspCred' || op==='certificacionObra'){
+      var b=ventaMonto, iv=ivaOf(b), tt=tot(b);
+      var concepto = op==='certificacionObra' ? 'la certificación de obra correspondiente al periodo'
+                   : op==='prestTranspCred'   ? 'los servicios de transporte prestados'
+                   : 'los servicios prestados';
+      txt=ft+' — Se factura a '+cli1+' '+concepto+' por '+_es(b)+' € + IVA '+ivaLabel+'. El cobro queda aplazado a 60 días.';
+      pista='Las prestaciones de servicios usan la cuenta 705 (Prestaciones de servicios). El derecho de cobro va a 430.';
+      filas=[{tipo:'debe',cuenta:'430',nombre:'Clientes',debe:tt},{tipo:'haber',cuenta:'705',nombre:'Prestaciones de servicios',haber:b},{tipo:'haber',cuenta:'477',nombre:'H.P. IVA repercutido',haber:iv}];
+    } else if(op==='prestServCtado' || op==='prestTranspCtado'){
+      var b=_imp(800,6000), iv=ivaOf(b), tt=tot(b);
+      var concepto = op==='prestTranspCtado' ? 'un servicio puntual de transporte' : 'un servicio prestado al contado';
+      txt=ft+' — Se factura y cobra a '+cli2+' '+concepto+' por '+_es(b)+' € + IVA '+ivaLabel+'. El importe se ingresa en cuenta bancaria.';
+      pista='Los servicios cobrados al contado se abonan en bancos (572) contra ingreso 705.';
+      filas=[{tipo:'debe',cuenta:'572',nombre:'Bancos',debe:tt},{tipo:'haber',cuenta:'705',nombre:'Prestaciones de servicios',haber:b},{tipo:'haber',cuenta:'477',nombre:'H.P. IVA repercutido',haber:iv}];
+
+    // ── HOSTELERÍA: géneros y TPV ──
+    } else if(op==='compraGenerosCred'){
+      var b=_imp(800,5000), iv=ivaOf(b), tt=tot(b);
+      txt=ft+' — Se reciben de '+prov1+' géneros (alimentos y bebidas) por '+_es(b)+' € + IVA '+ivaLabel+'. Pago aplazado a 30 días.';
+      pista='Los géneros (alimentos, bebidas) se contabilizan como compras de mercaderías (600).';
+      filas=[{tipo:'debe',cuenta:'600',nombre:'Compras de mercaderías',debe:b},{tipo:'debe',cuenta:'472',nombre:'H.P. IVA soportado',debe:iv},{tipo:'haber',cuenta:'400',nombre:'Proveedores',haber:tt}];
+    } else if(op==='compraGenerosCtado'){
+      var b=_imp(300,2000), iv=ivaOf(b), tt=tot(b);
+      txt=ft+' — Se compran al contado a '+prov2+' géneros para el servicio diario por '+_es(b)+' € + IVA '+ivaLabel+'. Pago por banco.';
+      pista='Las compras al contado de géneros van contra bancos (572).';
+      filas=[{tipo:'debe',cuenta:'600',nombre:'Compras de mercaderías',debe:b},{tipo:'debe',cuenta:'472',nombre:'H.P. IVA soportado',debe:iv},{tipo:'haber',cuenta:'572',nombre:'Bancos',haber:tt}];
+    } else if(op==='ventaTPV'){
+      var b=_imp(2000,12000), iv=ivaOf(b), tt=tot(b);
+      txt=ft+' — Se contabiliza la recaudación diaria del TPV correspondiente al periodo: '+_es(b)+' € + IVA '+ivaLabel+'. El importe se ingresa en cuenta bancaria.';
+      pista='La recaudación diaria por TPV se contabiliza como venta al contado (572 contra 700/477).';
+      filas=[{tipo:'debe',cuenta:'572',nombre:'Bancos',debe:tt},{tipo:'haber',cuenta:'700',nombre:'Ventas de mercaderías',haber:b},{tipo:'haber',cuenta:'477',nombre:'H.P. IVA repercutido',haber:iv}];
+
+    // ── SERVICIOS: material de oficina (gasto, no inmovilizado) ──
+    } else if(op==='compraMatOficina'){
+      var b=_imp(80,500), iv=ivaOf(b), tt=tot(b);
+      txt=ft+' — Se adquiere material de oficina (folios, tóner, archivadores…) por '+_es(b)+' € + IVA '+ivaLabel+'. Pago por banco.';
+      pista='El material de oficina consumible se contabiliza en la cuenta 629 (Otros servicios).';
+      filas=[{tipo:'debe',cuenta:'629',nombre:'Otros servicios',debe:b},{tipo:'debe',cuenta:'472',nombre:'H.P. IVA soportado',debe:iv},{tipo:'haber',cuenta:'572',nombre:'Bancos',haber:tt}];
+
+    // ── SERVICIOS / INFORMÁTICA: pago a acreedor ──
+    } else if(op==='pagoAcreedor'){
+      var m=_imp(500,4000);
+      txt=ft+' — Se realiza pago por banco de '+_es(m)+' € a un acreedor por servicios profesionales pendientes.';
+      pista='Los acreedores por prestaciones de servicios se registran en la cuenta 410.';
+      filas=[{tipo:'debe',cuenta:'410',nombre:'Acreedores por prestaciones de servicios',debe:m},{tipo:'haber',cuenta:'572',nombre:'Bancos',haber:m}];
+
+    // ── CONSTRUCCIÓN: materiales (601) y subcontratas (607) ──
+    } else if(op==='compraMaterialCred'){
+      var b=compraMonto, iv=ivaOf(b), tt=tot(b);
+      txt=ft+' — Se adquieren a '+prov1+' materiales para obra (cemento, hormigón, ferralla…) por '+_es(b)+' € + IVA '+ivaLabel+'. Pago aplazado a 60 días.';
+      pista='Los materiales para obra son materias primas (601), no mercaderías.';
+      filas=[{tipo:'debe',cuenta:'601',nombre:'Compras de materias primas',debe:b},{tipo:'debe',cuenta:'472',nombre:'H.P. IVA soportado',debe:iv},{tipo:'haber',cuenta:'400',nombre:'Proveedores',haber:tt}];
+    } else if(op==='compraMaterialCtado'){
+      var b=_imp(800,5000), iv=ivaOf(b), tt=tot(b);
+      txt=ft+' — Se compran al contado a '+prov2+' materiales de obra por '+_es(b)+' € + IVA '+ivaLabel+'. Pago por transferencia.';
+      pista='Materiales para obra: cuenta 601 (materias primas).';
+      filas=[{tipo:'debe',cuenta:'601',nombre:'Compras de materias primas',debe:b},{tipo:'debe',cuenta:'472',nombre:'H.P. IVA soportado',debe:iv},{tipo:'haber',cuenta:'572',nombre:'Bancos',haber:tt}];
+    } else if(op==='subcontrata'){
+      var b=_imp(2000,12000), iv=ivaOf(b), tt=tot(b);
+      txt=ft+' — La empresa subcontrata a '+prov1+' la ejecución de una parte de la obra por '+_es(b)+' € + IVA '+ivaLabel+'. Pago aplazado a 60 días.';
+      pista='Las subcontrataciones se registran en la cuenta 607 (Trabajos realizados por otras empresas).';
+      filas=[{tipo:'debe',cuenta:'607',nombre:'Trabajos realizados por otras empresas',debe:b},{tipo:'debe',cuenta:'472',nombre:'H.P. IVA soportado',debe:iv},{tipo:'haber',cuenta:'400',nombre:'Proveedores',haber:tt}];
+
+    // ── INFORMÁTICA: licencias software (inmovilizado intangible 206) ──
+    } else if(op==='compraLicencias'){
+      var b=_imp(1500,8000), iv=ivaOf(b), tt=tot(b);
+      txt=ft+' — Se adquieren licencias de software de uso plurianual a '+prov1+' por '+_es(b)+' € + IVA '+ivaLabel+'. Pago por banco.';
+      pista='Las licencias de software de uso plurianual son inmovilizado intangible (cuenta 206).';
+      filas=[{tipo:'debe',cuenta:'206',nombre:'Aplicaciones informáticas',debe:b},{tipo:'debe',cuenta:'472',nombre:'H.P. IVA soportado',debe:iv},{tipo:'haber',cuenta:'572',nombre:'Bancos',haber:tt}];
+
+    // ── INFORMÁTICA: hosting/cloud (alias de suministros) ──
+    } else if(op==='gastoHosting'){
+      var b=_imp(150,800), iv=ivaOf(b), tt=tot(b);
+      txt=ft+' — Se paga por banco la factura mensual de servicios cloud y hosting por '+_es(b)+' € + IVA '+ivaLabel+'.';
+      pista='Los servicios de hosting/cloud son gastos de suministros (628).';
+      filas=[{tipo:'debe',cuenta:'628',nombre:'Suministros',debe:b},{tipo:'debe',cuenta:'472',nombre:'H.P. IVA soportado',debe:iv},{tipo:'haber',cuenta:'572',nombre:'Bancos',haber:tt}];
+
+    // ── TRANSPORTE: combustible y mantenimiento ──
+    } else if(op==='compraCombustible'){
+      var b=_imp(400,2000), iv=ivaOf(b), tt=tot(b);
+      txt=ft+' — Se repostan los vehículos en la estación de servicio por importe de '+_es(b)+' € + IVA '+ivaLabel+'. Pago por banco.';
+      pista='El combustible se contabiliza como suministro (628).';
+      filas=[{tipo:'debe',cuenta:'628',nombre:'Suministros',debe:b},{tipo:'debe',cuenta:'472',nombre:'H.P. IVA soportado',debe:iv},{tipo:'haber',cuenta:'572',nombre:'Bancos',haber:tt}];
+    } else if(op==='gastoMantVehic'){
+      var b=_imp(200,1500), iv=ivaOf(b), tt=tot(b);
+      txt=ft+' — Se realiza una reparación y mantenimiento de la flota en '+prov1+' por '+_es(b)+' € + IVA '+ivaLabel+'. Pago por banco.';
+      pista='Las reparaciones y mantenimiento se contabilizan en la cuenta 622.';
+      filas=[{tipo:'debe',cuenta:'622',nombre:'Reparaciones y conservación',debe:b},{tipo:'debe',cuenta:'472',nombre:'H.P. IVA soportado',debe:iv},{tipo:'haber',cuenta:'572',nombre:'Bancos',haber:tt}];
+
+    // ── ALQUILERES (variantes) ──
+    } else if(op==='gastoAlquilerMaq' || op==='gastoAlquilerNave'){
+      var b=alqMonto, iv=ivaOf(b), tt=tot(b);
+      var concepto = op==='gastoAlquilerMaq' ? 'el alquiler mensual de maquinaria y medios auxiliares' : 'el alquiler mensual de la nave/local';
+      txt=ft+' — Se paga por banco '+concepto+' por importe de '+_es(b)+' € + IVA '+ivaLabel+'.';
+      pista='Los alquileres se registran en la cuenta 621 (Arrendamientos y cánones).';
+      filas=[{tipo:'debe',cuenta:'621',nombre:'Arrendamientos y cánones',debe:b},{tipo:'debe',cuenta:'472',nombre:'H.P. IVA soportado',debe:iv},{tipo:'haber',cuenta:'572',nombre:'Bancos',haber:tt}];
+
+    // ── INMOVILIZADO (variantes por sector) ──
+    } else if(op==='inmovilizadoCocina'){
+      var b=inmoMonto, iv=ivaOf(b), tt=tot(b);
+      var tp=_pick([['Maquinaria de cocina (hornos, planchas)','213'],['Mobiliario de hostelería','216']]);
+      txt=ft+' — Se adquiere '+tp[0].toLowerCase()+' por '+_es(b)+' € + IVA '+ivaLabel+'. Se financia mediante préstamo bancario a largo plazo.';
+      pista='Maquinaria → 213. Mobiliario → 216. Financiación a l/p → 170.';
+      filas=[{tipo:'debe',cuenta:tp[1],nombre:tp[0],debe:b},{tipo:'debe',cuenta:'472',nombre:'H.P. IVA soportado',debe:iv},{tipo:'haber',cuenta:'170',nombre:'Deudas a l/p con entidades de crédito',haber:tt}];
+    } else if(op==='inmovilizadoConstr'){
+      var b=inmoMonto, iv=ivaOf(b), tt=tot(b);
+      var tp=_pick([['Maquinaria de obra','213'],['Elementos de transporte (camión)','218']]);
+      txt=ft+' — La empresa adquiere '+tp[0].toLowerCase()+' por '+_es(b)+' € + IVA '+ivaLabel+'. Se financia mediante préstamo bancario a largo plazo.';
+      pista='Maquinaria de obra → 213. Vehículos → 218. Financiación a l/p → 170.';
+      filas=[{tipo:'debe',cuenta:tp[1],nombre:tp[0],debe:b},{tipo:'debe',cuenta:'472',nombre:'H.P. IVA soportado',debe:iv},{tipo:'haber',cuenta:'170',nombre:'Deudas a l/p con entidades de crédito',haber:tt}];
+    } else if(op==='inmovilizadoEquipos'){
+      var b=inmoMonto, iv=ivaOf(b), tt=tot(b);
+      var tp=_pick([['Mobiliario','216'],['Equipos para procesos de información','217']]);
+      txt=ft+' — Se adquiere '+tp[0].toLowerCase()+' para la oficina por '+_es(b)+' € + IVA '+ivaLabel+'. Se financia mediante préstamo bancario a largo plazo.';
+      pista='Mobiliario → 216. Equipos informáticos → 217. Financiación a l/p → 170.';
+      filas=[{tipo:'debe',cuenta:tp[1],nombre:tp[0],debe:b},{tipo:'debe',cuenta:'472',nombre:'H.P. IVA soportado',debe:iv},{tipo:'haber',cuenta:'170',nombre:'Deudas a l/p con entidades de crédito',haber:tt}];
+    } else if(op==='inmovilizadoEquiposIT'){
+      var b=inmoMonto, iv=ivaOf(b), tt=tot(b);
+      txt=ft+' — Se adquieren equipos informáticos (servidores, ordenadores, periféricos) por '+_es(b)+' € + IVA '+ivaLabel+'. Se financia mediante préstamo bancario a largo plazo.';
+      pista='Los equipos informáticos van en la cuenta 217. Financiación a l/p en la 170.';
+      filas=[{tipo:'debe',cuenta:'217',nombre:'Equipos para procesos de información',debe:b},{tipo:'debe',cuenta:'472',nombre:'H.P. IVA soportado',debe:iv},{tipo:'haber',cuenta:'170',nombre:'Deudas a l/p con entidades de crédito',haber:tt}];
+    } else if(op==='inmovilizadoVehic'){
+      var b=inmoMonto, iv=ivaOf(b), tt=tot(b);
+      txt=ft+' — La empresa adquiere un vehículo industrial para el transporte por '+_es(b)+' € + IVA '+ivaLabel+'. Se financia mediante préstamo bancario a largo plazo.';
+      pista='Los elementos de transporte se registran en la cuenta 218.';
+      filas=[{tipo:'debe',cuenta:'218',nombre:'Elementos de transporte',debe:b},{tipo:'debe',cuenta:'472',nombre:'H.P. IVA soportado',debe:iv},{tipo:'haber',cuenta:'170',nombre:'Deudas a l/p con entidades de crédito',haber:tt}];
     }
     return txt ? {texto:txt, filas:filas, pista:pista, fecha:fi} : null;
   }).filter(Boolean);
