@@ -23057,7 +23057,19 @@ window.genEjercicio = function(){
   while(pool.length < nOps){ opsSel.forEach(function(op){ if(pool.length<nOps) pool.push(op); }); }
   pool=pool.slice(0,nOps);
   // Sort logically
-  var order=['prestamo','inmovilizado','compraCred','compraCtado','ventaCred','ventaCtado','gastoAlquiler','gastoSuministros','nomina','cobroCliente','pagoProveedor','devCompra','devVenta','amortizacion','varExistencias'];
+  var order=[
+    'prestamo',
+    'inmovilizado','inmovilizadoCocina','inmovilizadoConstr','inmovilizadoEquipos','inmovilizadoEquiposIT','inmovilizadoVehic',
+    'compraLicencias',
+    'compraCred','compraCtado','compraGenerosCred','compraGenerosCtado','compraMaterialCred','compraMaterialCtado','compraMatOficina','compraCombustible',
+    'subcontrata',
+    'ventaCred','ventaCtado','ventaTPV','prestServCred','prestServCtado','prestTranspCred','prestTranspCtado','certificacionObra',
+    'gastoAlquiler','gastoAlquilerMaq','gastoAlquilerNave','gastoSuministros','gastoHosting','gastoMantVehic',
+    'nomina',
+    'cobroCliente','pagoProveedor','pagoAcreedor',
+    'devCompra','devVenta',
+    'amortizacion','varExistencias'
+  ];
   pool.sort(function(a,b){ return order.indexOf(a)-order.indexOf(b); });
 
   var dias=_generarDias(pool.length,month1,anyo);
