@@ -22746,7 +22746,7 @@ document.addEventListener('DOMContentLoaded', function(){
         </div>
         <div>
           <label style="display:block;font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;">Sector de actividad</label>
-          <select id="gen-sector" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:0.85rem;outline:none;box-sizing:border-box;">
+          <select id="gen-sector" onchange="genRenderOps(this.value)" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:0.85rem;outline:none;box-sizing:border-box;">
             <option value="comercio">Comercio / Distribución</option>
             <option value="servicios">Servicios profesionales</option>
             <option value="hosteleria">Hostelería / Restauración</option>
