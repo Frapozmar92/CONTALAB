@@ -16552,6 +16552,8 @@ async function guardarEjercicioEnDB(ej) {
       if (ci !== -1) cached[ci] = fresh; else cached.push(fresh);
       lsSet('cache_ejercicios_profesor', cached);
     } catch(e) {}
+    // Invalidar/actualizar la cache COMPARTIDA (la que usan los alumnos en login)
+    if (typeof cacheShSet === 'function') cacheShSet('ejerciciosProfesor', APP_DATA.ejerciciosProfesor || []);
     flash('✓ Ejercicio guardado', 'var(--green)');
   } catch(e) {
     console.error('[guardarEjercicio] excepción:', e);
