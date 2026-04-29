@@ -23164,7 +23164,12 @@ window.genEjercicio = function(){
   ];
   pool.sort(function(a,b){ return order.indexOf(a)-order.indexOf(b); });
 
-  var dias=_generarDias(pool.length,month1,anyo);
+  // Si el pool tiene tamaño distinto al inicial (por filtros) regeneramos fechas con la longitud correcta
+  if(pool.length !== fechasOps.length){
+    fechasOps = (modoPeriodo==='rango')
+      ? _generarFechasRango(pool.length, new Date(fechaIniISO+'T00:00:00'), new Date(fechaFinISO+'T00:00:00'))
+      : _generarFechasMes(pool.length, month1, anyo);
+  }
 
   // Pre-compute consistent amounts
   var compraMonto  = _imp(2000,15000);
