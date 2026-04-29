@@ -21606,6 +21606,7 @@ async function guardarTemasConfig() {
     console.error('[guardarTemasConfig] exception:', e);
     mostrarToastTemas('⚠ Error de red al guardar: ' + e.message, 'warn');
   }
+  if (typeof cacheShSet === 'function') cacheShSet('temasBundle', { moduloConfig: APP_DATA.moduloConfig, temasConfig: APP_DATA.temasConfig, chatiaModoAlumno: APP_DATA._chatiaModoAlumno || 'guia' });
   aplicarTemasConfig();
   aplicarModuloConfig();
 }
