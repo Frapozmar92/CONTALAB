@@ -16563,6 +16563,7 @@ async function guardarEjercicioEnDB(ej) {
 
 async function eliminarEjercicioDeBD(id) {
   try { await sbDelete('ejercicios_profesor', 'id=eq.' + id); } catch(e) { console.warn(e); }
+  if (typeof cacheShSet === 'function') cacheShSet('ejerciciosProfesor', APP_DATA.ejerciciosProfesor || []);
 }
 
 async function evaluarRespuestaEnDB(dbId, alumnoId, ejId, evaluacion, comentario) {
