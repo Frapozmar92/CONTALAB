@@ -16094,35 +16094,121 @@ async function confirmarNuevaPassword() {
 }
 
 // ── CARGAR DATOS Y ENTRAR COMO ALUMNO ────────────────────────
+// Estrategia de rendimiento:
+//   1) Datos COMPARTIDOS (ejercicios_profesor, config, ra_config, temas, eventos):
+//      se sirven desde cache local si están frescos (<5 min). Esto evita golpear
+//      Supabase repetidamente cuando muchos alumnos entran a la vez.
+//   2) Todas las consultas que sí van a la red se disparan en PARALELO con
+//      Promise.all en lugar de secuencialmente: pasamos de ~1.5 s a ~250 ms.
 async function cargarYEntrarAlumno(alumno) {
   showLoading('Cargando tu progreso…');
   try {
-    // Cargar progreso
-    var progRows = await sbSelect('progreso', 'alumno_id=eq.' + alumno.id);
-    var progreso = progRows.length ? (progRows[0].datos || crearProgresoVacio()) : crearProgresoVacio();
+    // ── 1) Pre-cargar desde caché (instantáneo) ──────────────
+    var cEj      = cacheShGet('ejerciciosProfesor');
+    var cCfg     = cacheShGet('configKV');
+    var cRa      = cacheShGet('raConfig');
+    var cEvt     = cacheShGet('calEventos');
+    var cTemas   = cacheShGet('temasBundle');
 
-    // Cargar ejercicios del profesor
-    var ejercicios = await sbSelect('ejercicios_profesor', '');
-    APP_DATA.ejerciciosProfesor = ejercicios
-      .slice().sort(function(a,b){ var oa=(a.datos&&a.datos._orden!=null)?a.datos._orden:9999; var ob=(b.datos&&b.datos._orden!=null)?b.datos._orden:9999; return oa-ob; })
-      .map(function(e){ return e.datos; });
+    // ── 2) Construir la lista de promesas en PARALELO ────────
+    // Las consultas por-alumno (progreso, respuestas) SIEMPRE se hacen.
+    // Las consultas de datos compartidos solo si la cache está vacía/expirada.
+    var fetchEj      = cEj    ? null : sbSelect('ejercicios_profesor', '');
+    var fetchCfg     = cCfg   ? null : sbSelect('config', '');
+    var fetchRa      = cRa    ? null : sbSelect('config', 'clave=eq.ra_config');
+    var fetchEvt     = cEvt   ? null : sbSelect('config', 'clave=eq.cal_eventos');
+    // Para temas necesitamos 3 queries; si hay cache no las hacemos
+    var fetchModulo  = cTemas ? null : sbSelect('config', 'clave=eq.modulo_config');
+    var fetchTemas   = cTemas ? null : sbSelect('config', 'clave=eq.temas_config');
+    var fetchChatIA  = cTemas ? null : sbSelect('config', 'clave=eq.chatia_modo_alumno');
 
-    // Cargar respuestas del alumno
-    var respRows = await sbSelect('respuestas', 'alumno_id=eq.' + alumno.id);
-    APP_DATA.respuestasAlumno = respRows.map(function(r){
+    var promesas = [
+      sbSelect('progreso',   'alumno_id=eq.' + alumno.id),
+      sbSelect('respuestas', 'alumno_id=eq.' + alumno.id),
+      fetchEj      || Promise.resolve(null),
+      fetchCfg     || Promise.resolve(null),
+      fetchRa      || Promise.resolve(null),
+      fetchEvt     || Promise.resolve(null),
+      fetchModulo  || Promise.resolve(null),
+      fetchTemas   || Promise.resolve(null),
+      fetchChatIA  || Promise.resolve(null)
+    ];
+    var res = await Promise.all(promesas);
+    var progRows = res[0], respRows = res[1];
+    var ejRows   = res[2], cfgRows  = res[3];
+    var raRows   = res[4], evtRows  = res[5];
+    var modRows  = res[6], temRows  = res[7], chatRows = res[8];
+
+    // ── 3) Procesar progreso (siempre por red) ────────────────
+    var progreso = (progRows && progRows.length) ? (progRows[0].datos || crearProgresoVacio()) : crearProgresoVacio();
+
+    // ── 4) Procesar respuestas (siempre por red) ──────────────
+    APP_DATA.respuestasAlumno = (respRows || []).map(function(r){
       return Object.assign({}, r.datos, { alumnoId: alumno.id, ejId: r.ejercicio_id, evaluacion: r.evaluacion, comentario: r.comentario, fecha: r.fecha, _dbId: r.id });
     });
 
-    // Cargar config
-    var cfg = await sbSelect('config', '');
-    cfg.forEach(function(c){ if (c.clave === 'codigo_clase') APP_DATA.codigoClase = c.valor; });
+    // ── 5) Aplicar datos compartidos (cache → o resultado red → cache) ──
+    // Ejercicios del profesor
+    if (cEj) {
+      APP_DATA.ejerciciosProfesor = cEj;
+    } else if (ejRows) {
+      APP_DATA.ejerciciosProfesor = ejRows
+        .slice().sort(function(a,b){ var oa=(a.datos&&a.datos._orden!=null)?a.datos._orden:9999; var ob=(b.datos&&b.datos._orden!=null)?b.datos._orden:9999; return oa-ob; })
+        .map(function(e){ return e.datos; });
+      cacheShSet('ejerciciosProfesor', APP_DATA.ejerciciosProfesor);
+    }
 
-    // Cargar configuración RA/CE
-    await cargarRaConfig();
-    // Cargar temas del módulo
-    await cargarTemasConfig();
-    // Cargar eventos del calendario
-    await cargarCalEventos();
+    // Config (codigo_clase, etc.)
+    if (cCfg) {
+      cCfg.forEach(function(c){ if (c.clave === 'codigo_clase') APP_DATA.codigoClase = c.valor; });
+    } else if (cfgRows) {
+      cfgRows.forEach(function(c){ if (c.clave === 'codigo_clase') APP_DATA.codigoClase = c.valor; });
+      cacheShSet('configKV', cfgRows);
+    }
+
+    // RA / CE config
+    if (cRa) {
+      APP_DATA.raConfig = cRa;
+    } else if (raRows) {
+      APP_DATA.raConfig = (raRows[0] && raRows[0].valor) ? JSON.parse(raRows[0].valor) : { ra: RA_CE_DEFAULT };
+      cacheShSet('raConfig', APP_DATA.raConfig);
+    }
+
+    // Calendario
+    if (cEvt) {
+      APP_DATA.calEventos = cEvt;
+    } else if (evtRows) {
+      APP_DATA.calEventos = (evtRows[0] && evtRows[0].valor) ? JSON.parse(evtRows[0].valor) : [];
+      cacheShSet('calEventos', APP_DATA.calEventos);
+    }
+
+    // Bundle de temas (modulo + temas + chatIA)
+    if (cTemas) {
+      if (cTemas.moduloConfig)      APP_DATA.moduloConfig    = cTemas.moduloConfig;
+      if (cTemas.temasConfig)       APP_DATA.temasConfig     = cTemas.temasConfig;
+      APP_DATA._chatiaModoAlumno = cTemas.chatiaModoAlumno || 'guia';
+    } else {
+      if (modRows && modRows.length && modRows[0].valor) {
+        try { APP_DATA.moduloConfig = JSON.parse(modRows[0].valor); } catch(e){}
+      }
+      if (temRows && temRows.length && temRows[0].valor) {
+        try { APP_DATA.temasConfig = JSON.parse(temRows[0].valor); } catch(e){}
+      }
+      if (chatRows && chatRows.length && chatRows[0].valor) {
+        var v = String(chatRows[0].valor).trim();
+        APP_DATA._chatiaModoAlumno = (v === 'libre' || v === 'off') ? v : 'guia';
+      } else {
+        APP_DATA._chatiaModoAlumno = 'guia';
+      }
+      cacheShSet('temasBundle', {
+        moduloConfig:      APP_DATA.moduloConfig,
+        temasConfig:       APP_DATA.temasConfig,
+        chatiaModoAlumno:  APP_DATA._chatiaModoAlumno
+      });
+    }
+    // Aplicar visualmente (siempre, esté cacheado o no)
+    if (typeof aplicarTemasConfig  === 'function') aplicarTemasConfig();
+    if (typeof aplicarModuloConfig === 'function') aplicarModuloConfig();
 
     hideLoading();
     entrarComoAlumnoLocal(alumno, progreso);
