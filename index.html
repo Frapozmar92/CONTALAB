@@ -16115,7 +16115,14 @@ async function loginAlumno() {
     await cargarYEntrarAlumno(fnData.alumno, fnData.bundle || null);
   } catch(e) {
     hideLoading();
-    showLoginError('l-error-alumno', 'Error de conexión. Conéctate a internet para iniciar sesión.');
+    var msg = (e && e.name === 'AbortError')
+      ? 'El servidor está tardando demasiado. Espera 5 segundos y pulsa "Reintentar".'
+      : 'No se pudo conectar con el servidor. Comprueba tu conexión y pulsa "Reintentar".';
+    var elErr = document.getElementById('l-error-alumno');
+    if (elErr) {
+      elErr.innerHTML = msg + ' <button type="button" onclick="loginAlumno()" style="margin-left:8px;padding:4px 10px;background:var(--accent4);color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;">Reintentar</button>';
+      elErr.classList.add('show');
+    }
   }
 }
 
