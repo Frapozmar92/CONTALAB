@@ -22885,6 +22885,21 @@ var _GEN = {
   }
 };
 
+// Operaciones COMUNES a casi todos los sectores (cierre, periodificación, moneda extranjera, deterioro, venta inmovilizado).
+// Se inyectan por sector más abajo.
+var _OPS_COMUNES_CIERRE = [
+  { cat:'CIERRE',     id:'periodGastoAnt',   label:'Periodificación de gasto anticipado',  hint:'480 → 6XX',                  nivel:'avanzado' },
+  { cat:'CIERRE',     id:'periodIngresoAnt', label:'Periodificación de ingreso anticipado',hint:'7XX → 485',                  nivel:'avanzado' },
+  { cat:'CIERRE',     id:'deterioroGlobal',  label:'Deterioro de créditos (método global)',hint:'694 → 490',                  nivel:'avanzado' }
+];
+var _OPS_COMUNES_INMO = [
+  { cat:'INMOVILIZADO', id:'ventaInmovilizado', label:'Venta de inmovilizado',              hint:'572/281 → 21X/477/771',      nivel:'avanzado' }
+];
+var _OPS_COMUNES_DIVISAS = [
+  { cat:'MONEDA EXTRANJERA', id:'monedaExtCompra', label:'Pago a proveedor extranjero (dif. cambio)', hint:'400 → 572 ± 668/768', nivel:'avanzado' },
+  { cat:'MONEDA EXTRANJERA', id:'monedaExtVenta',  label:'Cobro de cliente extranjero (dif. cambio)', hint:'572 ± 668/768 → 430', nivel:'avanzado' }
+];
+
 // Catálogo de operaciones por sector. Cada operación: cat (categoría), id, label, hint (asiento esquemático), nivel (basico/medio/avanzado).
 var _GEN_OPS = {
   comercio: [
