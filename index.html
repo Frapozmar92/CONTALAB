@@ -22770,7 +22770,19 @@ document.addEventListener('DOMContentLoaded', function(){
     <!-- SECCIÓN 2: PERIODO Y CONFIGURACIÓN -->
     <div style="margin-bottom:18px;padding:16px 18px;background:var(--bg);border:1px solid var(--border);border-radius:10px;">
       <div style="font-size:0.68rem;font-weight:700;color:var(--accent4);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;">📅 Periodo y configuración</div>
-      <div style="display:grid;grid-template-columns:1fr 100px 120px 80px;gap:12px;align-items:end;">
+
+      <!-- Selector de modo de periodo -->
+      <div style="display:flex;gap:18px;margin-bottom:10px;font-size:0.8rem;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="radio" name="gen-pmodo" value="mes" checked onchange="genTogglePeriodo('mes')" style="accent-color:var(--accent4);"> Mes específico
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="radio" name="gen-pmodo" value="rango" onchange="genTogglePeriodo('rango')" style="accent-color:var(--accent4);"> Entre fechas (rango personalizado)
+        </label>
+      </div>
+
+      <!-- Modo: mes específico -->
+      <div id="gen-pmes" style="display:grid;grid-template-columns:1fr 110px;gap:12px;margin-bottom:12px;">
         <div>
           <label style="display:block;font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;">Mes</label>
           <select id="gen-mes" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:0.85rem;outline:none;box-sizing:border-box;">
@@ -22784,6 +22796,22 @@ document.addEventListener('DOMContentLoaded', function(){
           <label style="display:block;font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;">Año</label>
           <input id="gen-anyo" type="number" value="2025" min="2020" max="2030" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:0.85rem;outline:none;box-sizing:border-box;">
         </div>
+      </div>
+
+      <!-- Modo: rango entre fechas -->
+      <div id="gen-prango" style="display:none;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div>
+          <label style="display:block;font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;">Fecha inicio</label>
+          <input id="gen-fecha-ini" type="date" value="2026-03-01" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:0.85rem;outline:none;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="display:block;font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;">Fecha fin</label>
+          <input id="gen-fecha-fin" type="date" value="2026-12-31" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:0.85rem;outline:none;box-sizing:border-box;">
+        </div>
+      </div>
+
+      <!-- IVA + Nº operaciones -->
+      <div style="display:grid;grid-template-columns:140px 120px;gap:12px;align-items:end;">
         <div>
           <label style="display:block;font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;">Tipo IVA general</label>
           <select id="gen-iva" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:0.85rem;outline:none;box-sizing:border-box;">
@@ -22795,9 +22823,15 @@ document.addEventListener('DOMContentLoaded', function(){
         </div>
         <div>
           <label style="display:block;font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;">Nº operaciones</label>
-          <input id="gen-nops" type="number" value="6" min="3" max="15" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:0.85rem;outline:none;box-sizing:border-box;">
+          <input id="gen-nops" type="number" value="6" min="3" max="20" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:0.85rem;outline:none;box-sizing:border-box;">
         </div>
       </div>
+
+      <!-- Asiento de apertura -->
+      <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;font-size:0.82rem;padding:8px 10px;background:rgba(184,134,11,0.06);border:1px solid rgba(184,134,11,0.2);border-radius:7px;">
+        <input type="checkbox" id="gen-apertura" style="width:14px;height:14px;accent-color:var(--accent);">
+        <span><strong>📂 Incluir asiento de apertura inicial</strong> — recoge los saldos heredados del ejercicio anterior</span>
+      </label>
     </div>
 
     <!-- SECCIÓN 3: OPERACIONES -->
