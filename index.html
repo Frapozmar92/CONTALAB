@@ -16004,10 +16004,13 @@ async function loginAlumno() {
 
   showLoading('Iniciando sesión…');
   try {
+    // Solicitar bundle SIEMPRE: el servidor devuelve, en una sola respuesta,
+    // el token + alumno + progreso + respuestas + ejercicios + config.
+    // Esto reduce drásticamente los round-trips cuando muchos alumnos entran a la vez.
     var fnRes = await fetch(SUPABASE_URL + '/functions/v1/login-alumno', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
-      body: JSON.stringify({ nombre: nombre, password: pwd })
+      body: JSON.stringify({ nombre: nombre, password: pwd, with_bundle: true })
     });
     var fnData = await fnRes.json();
 
@@ -16040,7 +16043,9 @@ async function loginAlumno() {
     _sbRefreshToken = fnData.refresh_token || null;
     _sbStartTokenRefresh();
 
-    await cargarYEntrarAlumno(fnData.alumno);
+    // Pasar el bundle si el servidor lo devolvió; cargarYEntrarAlumno lo usará para
+    // evitar las consultas extra. Si por algún motivo no llega, hace fallback al flujo normal.
+    await cargarYEntrarAlumno(fnData.alumno, fnData.bundle || null);
   } catch(e) {
     hideLoading();
     showLoginError('l-error-alumno', 'Error de conexión. Conéctate a internet para iniciar sesión.');
