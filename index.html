@@ -23244,10 +23244,11 @@ window.genEjercicio = function(){
   }
   if(!opsSel.length){ alert('Selecciona al menos una operación.'); return; }
 
-  // Build pool up to nOps, repeated if needed
+  // Build pool of EXACTLY nOps items, repeating opsSel cyclically si hace falta.
   var pool=[];
-  while(pool.length < nOps){ opsSel.forEach(function(op){ if(pool.length<nOps) pool.push(op); }); }
-  pool=pool.slice(0,nOps);
+  for(var i=0; i<nOps; i++){
+    pool.push(opsSel[i % opsSel.length]);
+  }
   // Sort logically
   var order=[
     'prestamo',
